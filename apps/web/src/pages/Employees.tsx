@@ -3,6 +3,8 @@ import Navbar from "../components/Navbar";
 import { useAuth } from "../context/AuthContext";
 import { api, type Employee, type Pod } from "../lib/api";
 
+const DAY_NAMES = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+
 export default function EmployeesPage() {
   const { user } = useAuth();
   const canEdit = user?.role === "ADMIN" || user?.role === "MANAGER";
@@ -19,11 +21,18 @@ export default function EmployeesPage() {
   // Modal State
   const dialogRef = useRef<HTMLDialogElement>(null);
   const [editingEmp, setEditingEmp] = useState<Employee | null>(null);
-  const [formData, setFormData] = useState({
+  const [formData, setFormData] = useState<{
+    name: string;
+    email: string;
+    podId: string;
+    isActive: boolean;
+    preferredOffDay: number | null;
+  }>({
     name: "",
     email: "",
     podId: "",
     isActive: true,
+    preferredOffDay: null,
   });
   const [submitting, setSubmitting] = useState(false);
   const [modalError, setModalError] = useState<string | null>(null);
@@ -49,7 +58,7 @@ export default function EmployeesPage() {
 
   const openAddModal = () => {
     setEditingEmp(null);
-    setFormData({ name: "", email: "", podId: "", isActive: true });
+    setFormData({ name: "", email: "", podId: "", isActive: true, preferredOffDay: null });
     setModalError(null);
     dialogRef.current?.showModal();
   };
@@ -61,6 +70,7 @@ export default function EmployeesPage() {
       email: emp.email || "",
       podId: emp.podId || "",
       isActive: emp.isActive,
+      preferredOffDay: emp.preferredOffDay ?? null,
     });
     setModalError(null);
     dialogRef.current?.showModal();
@@ -81,6 +91,7 @@ export default function EmployeesPage() {
         email: formData.email.trim() || null,
         podId: formData.podId || null,
         isActive: formData.isActive,
+        preferredOffDay: formData.preferredOffDay,
       });
       if (res.error) {
         setModalError(res.error);
@@ -184,6 +195,7 @@ export default function EmployeesPage() {
                   <th className="px-4 py-3 font-medium">Name</th>
                   <th className="px-4 py-3 font-medium">Email</th>
                   <th className="px-4 py-3 font-medium">Pod</th>
+                  <th className="px-4 py-3 font-medium">Pref. off</th>
                   <th className="px-4 py-3 font-medium text-center">Assignments</th>
                   <th className="px-4 py-3 font-medium">Status</th>
                   {canEdit && <th className="px-4 py-3 font-medium text-right">Actions</th>}
@@ -192,13 +204,13 @@ export default function EmployeesPage() {
               <tbody className="divide-y divide-[#E2DDD3]">
                 {loading ? (
                   <tr>
-                    <td colSpan={canEdit ? 6 : 5} className="py-8 text-center text-sm text-[#6B675F]">
+                    <td colSpan={canEdit ? 7 : 6} className="py-8 text-center text-sm text-[#6B675F]">
                       Loading staff records…
                     </td>
                   </tr>
                 ) : filteredEmployees.length === 0 ? (
                   <tr>
-                    <td colSpan={canEdit ? 6 : 5} className="py-8 text-center text-sm text-[#6B675F]">
+                    <td colSpan={canEdit ? 7 : 6} className="py-8 text-center text-sm text-[#6B675F]">
                       No employees found.
                     </td>
                   </tr>
@@ -208,15 +220,21 @@ export default function EmployeesPage() {
                       <td className="px-4 py-3 font-medium text-[#1D1C1A]">{emp.name}</td>
                       <td className="px-4 py-3 text-[#6B675F]">{emp.email || "—"}</td>
                       <td className="px-4 py-3 text-[#1D1C1A]">{emp.pod?.name || "Unassigned"}</td>
+                      <td className="px-4 py-3 text-xs text-[#6B675F]">
+                        {emp.preferredOffDay !== null && emp.preferredOffDay !== undefined
+                          ? DAY_NAMES[emp.preferredOffDay] ?? "—"
+                          : "—"}
+                      </td>
                       <td className="px-4 py-3 text-center text-[#1D1C1A]">
                         {emp._count?.assignments ?? 0}
                       </td>
                       <td className="px-4 py-3">
                         <span
-                          className={`inline-block rounded-[6px] px-2 py-0.5 text-xs font-medium ${emp.isActive
+                          className={`inline-block rounded-[6px] px-2 py-0.5 text-xs font-medium ${
+                            emp.isActive
                               ? "bg-[#E4ECE6] text-[#1F4D3A]"
                               : "bg-[#E2DDD3]/50 text-[#6B675F]"
-                            }`}
+                          }`}
                         >
                           {emp.isActive ? "Active" : "Inactive"}
                         </span>
@@ -233,10 +251,11 @@ export default function EmployeesPage() {
                           <button
                             type="button"
                             onClick={() => toggleStatus(emp)}
-                            className={`text-xs font-medium ${emp.isActive
+                            className={`text-xs font-medium ${
+                              emp.isActive
                                 ? "text-[#A3262A] hover:underline"
                                 : "text-[#1F4D3A] hover:underline"
-                              }`}
+                            }`}
                           >
                             {emp.isActive ? "Deactivate" : "Activate"}
                           </button>
@@ -309,6 +328,36 @@ export default function EmployeesPage() {
               ))}
             </select>
           </div>
+
+          {editingEmp && (
+            <div>
+              <label className="block text-xs font-medium uppercase tracking-wider text-[#6B675F]">
+                Preferred Weekly Off
+              </label>
+              <select
+                value={formData.preferredOffDay === null ? "" : String(formData.preferredOffDay)}
+                onChange={(e) =>
+                  setFormData({
+                    ...formData,
+                    preferredOffDay: e.target.value === "" ? null : Number(e.target.value),
+                  })
+                }
+                className="mt-1 block w-full rounded-[6px] border border-[#E2DDD3] bg-[#FFFFFF] px-3 py-1.5 text-sm text-[#1D1C1A] focus:border-[#1F4D3A] focus:outline-none focus:ring-1 focus:ring-[#1F4D3A]"
+              >
+                <option value="">None</option>
+                <option value="0">Sunday</option>
+                <option value="1">Monday</option>
+                <option value="2">Tuesday</option>
+                <option value="3">Wednesday</option>
+                <option value="4">Thursday</option>
+                <option value="5">Friday</option>
+                <option value="6">Saturday</option>
+              </select>
+              <p className="mt-1 text-xs text-[#6B675F]">
+                A preference only. Client coverage always takes priority.
+              </p>
+            </div>
+          )}
 
           {editingEmp && (
             <label className="flex items-center gap-2 cursor-pointer pt-1 text-sm text-[#1D1C1A]">

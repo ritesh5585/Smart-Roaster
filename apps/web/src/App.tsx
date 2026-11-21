@@ -8,6 +8,8 @@ import Dashboard from "./pages/Dashboard";
 import EmployeesPage from "./pages/Employees";
 import BrandsPage from "./pages/Brands";
 import PodsPage from "./pages/Pods";
+import LeavesPage from "./pages/Leaves";
+import HolidaysPage from "./pages/Holidays";
 
 const googleClientId = import.meta.env.VITE_GOOGLE_CLIENT_ID || "";
 
@@ -56,6 +58,22 @@ export default function App() {
               element={
                 <ProtectedRoute>
                   <PodsPage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/leaves"
+              element={
+                <ProtectedRoute>
+                  <LeavesPage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/holidays"
+              element={
+                <ProtectedRoute>
+                  <HolidaysPage />
                 </ProtectedRoute>
               }
             />

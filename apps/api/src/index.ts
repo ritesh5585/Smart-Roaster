@@ -10,6 +10,8 @@ import processRoutes from "./routes/process.routes";
 import brandRoutes from "./routes/brand.routes";
 import brandProcessRoutes from "./routes/brand-process.routes";
 import assignmentRoutes from "./routes/assignment.routes";
+import holidayRoutes from "./routes/holiday.routes";
+import leaveRoutes from "./routes/leave.routes";
 
 for (const key of [
   "DATABASE_URL",
@@ -37,6 +39,8 @@ app.use("/processes", processRoutes);
 app.use("/brands", brandRoutes);
 app.use("/brand-processes", brandProcessRoutes);
 app.use("/assignments", assignmentRoutes);
+app.use("/holidays", holidayRoutes);
+app.use("/leaves", leaveRoutes);
 
 const port = Number(process.env.PORT) || 4000;
 app.listen(port, () => console.log(`API running on :${port}`));

@@ -44,15 +44,17 @@ model Pod {
 }
 
 model Employee {
-  id          String       @id @default(uuid())
-  name        String
-  email       String?      @unique
-  isActive    Boolean      @default(true)
-  podId       String?
-  pod         Pod?         @relation("PodMembers", fields: [podId], references: [id])
-  ledPod      Pod?         @relation("PodLead")
-  assignments Assignment[]
-  createdAt   DateTime     @default(now())
+  id              String       @id @default(uuid())
+  name            String
+  email           String?      @unique
+  isActive        Boolean      @default(true)
+  podId           String?
+  pod             Pod?         @relation("PodMembers", fields: [podId], references: [id])
+  ledPod          Pod?         @relation("PodLead")
+  assignments     Assignment[]
+  preferredOffDay Int?
+  leaves          Leave[]
+  createdAt       DateTime     @default(now())
 
   @@map("employees")
 }
@@ -98,4 +100,31 @@ model Assignment {
 
   @@unique([employeeId, brandProcessId])
   @@map("assignments")
+}
+
+enum LeaveType {
+  LEAVE
+  COMP_OFF
+}
+
+model Holiday {
+  id   String   @id @default(uuid())
+  date DateTime @unique @db.Date
+  name String
+
+  @@map("holidays")
+}
+
+model Leave {
+  id         String    @id @default(uuid())
+  employeeId String
+  employee   Employee  @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+  startDate  DateTime  @db.Date
+  endDate    DateTime  @db.Date
+  type       LeaveType @default(LEAVE)
+  note       String?
+  createdAt  DateTime  @default(now())
+
+  @@index([employeeId, startDate, endDate])
+  @@map("leaves")
 }

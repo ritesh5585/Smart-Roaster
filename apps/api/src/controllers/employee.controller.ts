@@ -14,6 +14,7 @@ const updateEmployeeSchema = z.object({
   email: z.string().trim().toLowerCase().email().optional().nullable(),
   podId: z.string().trim().uuid().optional().nullable(),
   isActive: z.boolean().optional(),
+  preferredOffDay: z.number().int().min(0).max(6).optional().nullable(),
 });
 
 export async function getEmployees(req: Request, res: Response) {
@@ -68,11 +69,13 @@ export async function updateEmployee(req: Request, res: Response) {
     email?: string | null;
     podId?: string | null;
     isActive?: boolean;
+    preferredOffDay?: number | null;
   } = {};
   if (parsed.data.name !== undefined) data.name = parsed.data.name;
   if (parsed.data.email !== undefined) data.email = parsed.data.email;
   if (parsed.data.podId !== undefined) data.podId = parsed.data.podId;
   if (parsed.data.isActive !== undefined) data.isActive = parsed.data.isActive;
+  if (parsed.data.preferredOffDay !== undefined) data.preferredOffDay = parsed.data.preferredOffDay;
 
   if (Object.keys(data).length === 0)
     return res.status(400).json({ error: "No fields to update" });

@@ -1,4 +1,4 @@
-import { PrismaClient, OperatingRule } from "@prisma/client";
+import { PrismaClient, OperatingRule, LeaveType } from "@prisma/client";
 
 const prisma = new PrismaClient();
 
@@ -124,35 +124,17 @@ async function main() {
   }
   console.log("Pods and Employees seeded:", employeeList.length);
 
+  // Set preferredOffDay for ~10 employees
+  const preferredOffDays = [0, 0, 6, 1, 5, 0, 6, 3, 0, 6];
+  for (let i = 0; i < 10; i++) {
+    await prisma.employee.update({
+      where: { id: employeeList[i].id },
+      data: { preferredOffDay: preferredOffDays[i] },
+    });
+  }
+  console.log("preferredOffDay set for 10 employees");
+
   // 3. Brands & Brand Processes
-  // Multi-resource (5):
-  // M1: Kalyan Organics (CS: ALL_365, ACC: EXCEPT_HOLIDAYS, NDR: NO_SUN_HOLIDAYS) -> 3 employees
-  // M2: Zouk Lifestyle (CS: ALL_365 minCoverage 2, RET: EXCEPT_HOLIDAYS) -> 2 employees sharing CS, one also on RET
-  // M3: Paperboat Foods (CS: EXCEPT_HOLIDAYS, NDR: EXCEPT_HOLIDAYS) -> 2 employees
-  // M4: Wakefit Sleep (ACC: ALL_365 minCoverage 2, CS: EXCEPT_HOLIDAYS) -> 3 employees (two share ACC, one CS)
-  // M5: Sugar Cosmetics (CS: EXCEPT_HOLIDAYS, RET: EXCEPT_HOLIDAYS) -> 2 employees
-
-  // Single-resource (19): ONE dedicated employee assigned to ALL processes of that brand
-  // S01: Blue Tokai Coffee (CS: EXCEPT_HOLIDAYS, ACC: NO_SUN_HOLIDAYS)
-  // S02: Chaayos Express (CS: ALL_365) - single point of failure test
-  // S03: Boat Audio (CS: EXCEPT_HOLIDAYS, RET: NO_SUN_HOLIDAYS)
-  // S04: Lenskart Direct (CS: EXCEPT_HOLIDAYS, ACC: EXCEPT_HOLIDAYS, NDR: NO_SUN_HOLIDAYS)
-  // S05: Mamaearth Naturals (CS: EXCEPT_HOLIDAYS, ACC: EXCEPT_HOLIDAYS)
-  // S06: Epigamia Dairy (CS: EXCEPT_HOLIDAYS, NDR: EXCEPT_HOLIDAYS)
-  // S07: Sleepy Owl Brews (CS: EXCEPT_HOLIDAYS, ACC: EXCEPT_HOLIDAYS)
-  // S08: Phool Incense (CS: EXCEPT_HOLIDAYS)
-  // S09: Country Delight (CS: EXCEPT_HOLIDAYS, NDR: EXCEPT_HOLIDAYS, RET: EXCEPT_HOLIDAYS)
-  // S10: Mokobara Travel (CS: EXCEPT_HOLIDAYS, ACC: EXCEPT_HOLIDAYS)
-  // S11: Bombay Shaving Co (CS: EXCEPT_HOLIDAYS, RET: EXCEPT_HOLIDAYS)
-  // S12: Snitch Fashion (CS: EXCEPT_HOLIDAYS, ACC: EXCEPT_HOLIDAYS)
-  // S13: Suta Artisans (CS: EXCEPT_HOLIDAYS, NDR: EXCEPT_HOLIDAYS)
-  // S14: The Souled Store (CS: EXCEPT_HOLIDAYS, ACC: EXCEPT_HOLIDAYS, RET: EXCEPT_HOLIDAYS)
-  // S15: Bira 91 Crafts (CS: EXCEPT_HOLIDAYS)
-  // S16: BlissClub Athletics (CS: EXCEPT_HOLIDAYS, ACC: EXCEPT_HOLIDAYS)
-  // S17: Open Secret Foods (CS: EXCEPT_HOLIDAYS, NDR: EXCEPT_HOLIDAYS)
-  // S18: Slurrp Farm Organics (CS: EXCEPT_HOLIDAYS, ACC: EXCEPT_HOLIDAYS)
-  // S19: Heads Up For Tails (CS: EXCEPT_HOLIDAYS, RET: EXCEPT_HOLIDAYS)
-
   interface BrandSeedDef {
     name: string;
     processes: { code: string; rule?: OperatingRule; minCoverage?: number }[];
@@ -360,15 +342,9 @@ async function main() {
       brandProcessMap[bDef.name][p.code] = bp.id;
     }
   }
-  console.log(
-    "Brands and BrandProcesses seeded:",
-    Object.keys(brandProcessMap).length,
-  );
+  console.log("Brands and BrandProcesses seeded:", Object.keys(brandProcessMap).length);
 
   // 4. Assignments
-  // 32 employees (indexes 0 to 31)
-  // Single-resource brands S01 to S19 (19 brands):
-  // ONE dedicated employee assigned to ALL processes of that brand
   const singleResourceBrandNames = [
     "Blue Tokai Coffee", // Emp 0
     "Chaayos Express", // Emp 1
@@ -391,19 +367,15 @@ async function main() {
     "Heads Up For Tails", // Emp 31
   ];
 
-  const assignmentRecords: { employeeId: string; brandProcessId: string }[] =
-    [];
+  const assignmentRecords: { employeeId: string; brandProcessId: string }[] = [];
 
   // Assign single-resource brands
   singleResourceBrandNames.forEach((bName, idx) => {
-    const empIdx = idx === 18 ? 31 : idx; // 0..17, and 31
+    const empIdx = idx === 18 ? 31 : idx;
     const empId = employeeList[empIdx].id;
     const bpObj = brandProcessMap[bName];
     for (const pCode of Object.keys(bpObj)) {
-      assignmentRecords.push({
-        employeeId: empId,
-        brandProcessId: bpObj[pCode],
-      });
+      assignmentRecords.push({ employeeId: empId, brandProcessId: bpObj[pCode] });
     }
   });
 
@@ -469,7 +441,6 @@ async function main() {
   );
 
   // M5: Sugar Cosmetics -> 2 employees, CS and RET
-  // Employees 28 and 29
   assignmentRecords.push(
     {
       employeeId: employeeList[28].id,
@@ -482,15 +453,11 @@ async function main() {
   );
 
   // Multi-brand allocation:
-  // "Two employees are assigned to two different brands each (to show multi-brand allocation)."
-  // Employee 20 (already on Kalyan Organics) is also assigned to Paperboat Foods (NDR)
   assignmentRecords.push({
     employeeId: employeeList[20].id,
     brandProcessId: brandProcessMap["Paperboat Foods"]["NDR"],
   });
 
-  // Employee 30 was not yet assigned -> assign to Sugar Cosmetics (RET) AND Wakefit Sleep (CS)
-  // Making Employee 30 the second multi-brand employee!
   assignmentRecords.push(
     {
       employeeId: employeeList[30].id,
@@ -507,8 +474,120 @@ async function main() {
     data: assignmentRecords,
     skipDuplicates: true,
   });
-
   console.log("Assignments created:", assignmentRecords.length);
+
+  // 5. Holidays (~12 Indian public holidays for current year 2026 and next year 2027)
+  const holidayDefs = [
+    // 2026
+    { date: "2026-01-26", name: "Republic Day" },
+    { date: "2026-03-04", name: "Holi" },
+    { date: "2026-03-21", name: "Id-ul-Fitr" },
+    { date: "2026-04-03", name: "Good Friday" },
+    { date: "2026-04-14", name: "Dr. Ambedkar Jayanti" },
+    { date: "2026-05-01", name: "Maharashtra Day / Labour Day" },
+    { date: "2026-08-15", name: "Independence Day" },
+    { date: "2026-09-04", name: "Janmashtami" },
+    { date: "2026-10-02", name: "Mahatma Gandhi Jayanti" },
+    { date: "2026-10-20", name: "Dussehra" },
+    { date: "2026-11-08", name: "Diwali" },
+    { date: "2026-12-25", name: "Christmas" },
+    // 2027
+    { date: "2027-01-26", name: "Republic Day" },
+    { date: "2027-03-22", name: "Holi" },
+    { date: "2027-03-10", name: "Id-ul-Fitr" },
+    { date: "2027-03-26", name: "Good Friday" },
+    { date: "2027-04-14", name: "Dr. Ambedkar Jayanti" },
+    { date: "2027-05-01", name: "Maharashtra Day / Labour Day" },
+    { date: "2027-08-15", name: "Independence Day" },
+    { date: "2027-08-25", name: "Janmashtami" },
+    { date: "2027-10-02", name: "Mahatma Gandhi Jayanti" },
+    { date: "2027-10-09", name: "Dussehra" },
+    { date: "2027-10-28", name: "Diwali" },
+    { date: "2027-12-25", name: "Christmas" },
+  ];
+
+  for (const h of holidayDefs) {
+    const d = new Date(`${h.date}T00:00:00.000Z`);
+    await prisma.holiday.upsert({
+      where: { date: d },
+      update: { name: h.name },
+      create: { date: d, name: h.name },
+    });
+  }
+  console.log("Holidays seeded:", holidayDefs.length);
+
+  // 6. Sample Leaves (6 sample leaves across different employees in next calendar month December 2026)
+  const sampleLeaves = [
+    // (a) Single employee of ALL_365 single-resource brand (Chaayos Express dedicated employee)
+    {
+      employeeId: employeeList[1].id,
+      startDate: "2026-12-14",
+      endDate: "2026-12-18",
+      type: LeaveType.LEAVE,
+      note: "Medical leave",
+    },
+    // (b) One employee of the 3-person brand M1 (Kalyan Organics)
+    {
+      employeeId: employeeList[18].id,
+      startDate: "2026-12-07",
+      endDate: "2026-12-11",
+      type: LeaveType.LEAVE,
+      note: "Personal travel",
+    },
+    // 4 other employees
+    {
+      employeeId: employeeList[2].id,
+      startDate: "2026-12-02",
+      endDate: "2026-12-04",
+      type: LeaveType.COMP_OFF,
+      note: "Comp off for weekend support",
+    },
+    {
+      employeeId: employeeList[5].id,
+      startDate: "2026-12-21",
+      endDate: "2026-12-24",
+      type: LeaveType.LEAVE,
+      note: "Family vacation",
+    },
+    {
+      employeeId: employeeList[10].id,
+      startDate: "2026-12-28",
+      endDate: "2026-12-30",
+      type: LeaveType.LEAVE,
+      note: "Year-end break",
+    },
+    {
+      employeeId: employeeList[22].id,
+      startDate: "2026-12-15",
+      endDate: "2026-12-17",
+      type: LeaveType.COMP_OFF,
+      note: "Earned comp off",
+    },
+  ];
+
+  for (const sl of sampleLeaves) {
+    const startD = new Date(`${sl.startDate}T00:00:00.000Z`);
+    const endD = new Date(`${sl.endDate}T00:00:00.000Z`);
+    const exists = await prisma.leave.findFirst({
+      where: {
+        employeeId: sl.employeeId,
+        startDate: startD,
+        endDate: endD,
+      },
+    });
+    if (!exists) {
+      await prisma.leave.create({
+        data: {
+          employeeId: sl.employeeId,
+          startDate: startD,
+          endDate: endD,
+          type: sl.type,
+          note: sl.note,
+        },
+      });
+    }
+  }
+  console.log("Sample leaves seeded:", sampleLeaves.length);
   console.log("Seed completed successfully.");
 }
 

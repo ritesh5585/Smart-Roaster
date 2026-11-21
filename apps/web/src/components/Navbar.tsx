@@ -27,16 +27,18 @@ interface NavItem {
 const navByRole: Record<string, NavItem[]> = {
   ADMIN: [
     { label: "Dashboard", to: "/dashboard", ready: true },
-    { label: "Employees", to: "/employees", ready: false },
-    { label: "Brands", to: "/brands", ready: false },
+    { label: "Employees", to: "/employees", ready: true },
+    { label: "Brands", to: "/brands", ready: true },
+    { label: "Pods", to: "/pods", ready: true },
     { label: "Roster", to: "/roster", ready: false },
     { label: "Conflicts", to: "/conflicts", ready: false },
     { label: "Users", to: "/users", ready: false },
   ],
   MANAGER: [
     { label: "Dashboard", to: "/dashboard", ready: true },
-    { label: "Employees", to: "/employees", ready: false },
-    { label: "Brands", to: "/brands", ready: false },
+    { label: "Employees", to: "/employees", ready: true },
+    { label: "Brands", to: "/brands", ready: true },
+    { label: "Pods", to: "/pods", ready: true },
     { label: "Roster", to: "/roster", ready: false },
     { label: "Conflicts", to: "/conflicts", ready: false },
   ],

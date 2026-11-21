@@ -1,18 +1,61 @@
+import { useState, useEffect } from "react";
 import { useAuth } from "../context/AuthContext";
 import Navbar from "../components/Navbar";
+import { api } from "../lib/api";
 
 export default function Dashboard() {
   const { user } = useAuth();
+  const [activeEmpCount, setActiveEmpCount] = useState<number | null>(null);
+  const [activeBrandsCount, setActiveBrandsCount] = useState<number | null>(null);
+  const [podsCount, setPodsCount] = useState<number | null>(null);
+
+  useEffect(() => {
+    let mounted = true;
+
+    Promise.all([
+      api.getEmployees({ active: true }),
+      api.getBrands(),
+      api.getPods(),
+    ]).then(([empRes, brandRes, podRes]) => {
+      if (!mounted) return;
+      if (empRes.data) setActiveEmpCount(empRes.data.length);
+      if (brandRes.data) {
+        const activeBrands = brandRes.data.filter((b) => b.isActive);
+        setActiveBrandsCount(activeBrands.length);
+      }
+      if (podRes.data) setPodsCount(podRes.data.length);
+    });
+
+    return () => {
+      mounted = false;
+    };
+  }, []);
 
   const hour = new Date().getHours();
   const greeting = hour < 12 ? "Good morning" : hour < 18 ? "Good afternoon" : "Good evening";
   const firstName = user?.name ? user.name.trim().split(/\s+/)[0] : "there";
 
   const statTiles = [
-    { label: "Employees", value: "--", note: "Available after setup" },
-    { label: "Active brands", value: "--", note: "Available after setup" },
-    { label: "Pods", value: "--", note: "Available after setup" },
-    { label: "Open conflicts", value: "--", note: "Available after setup" },
+    {
+      label: "Employees",
+      value: activeEmpCount !== null ? String(activeEmpCount) : "--",
+      note: activeEmpCount !== null ? "Active staff" : "Available after setup",
+    },
+    {
+      label: "Active brands",
+      value: activeBrandsCount !== null ? String(activeBrandsCount) : "--",
+      note: activeBrandsCount !== null ? "Operating brands" : "Available after setup",
+    },
+    {
+      label: "Pods",
+      value: podsCount !== null ? String(podsCount) : "--",
+      note: podsCount !== null ? "Operational pods" : "Available after setup",
+    },
+    {
+      label: "Open conflicts",
+      value: "--",
+      note: "Available after setup",
+    },
   ];
 
   const weekdays = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];

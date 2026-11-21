@@ -5,6 +5,9 @@ import ProtectedRoute from "./components/ProtectedRoute";
 import LoginPage from "./pages/Login";
 import RegisterPage from "./pages/Register";
 import Dashboard from "./pages/Dashboard";
+import EmployeesPage from "./pages/Employees";
+import BrandsPage from "./pages/Brands";
+import PodsPage from "./pages/Pods";
 
 const googleClientId = import.meta.env.VITE_GOOGLE_CLIENT_ID || "";
 
@@ -29,6 +32,30 @@ export default function App() {
               element={
                 <ProtectedRoute>
                   <Dashboard />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/employees"
+              element={
+                <ProtectedRoute>
+                  <EmployeesPage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/brands"
+              element={
+                <ProtectedRoute>
+                  <BrandsPage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/pods"
+              element={
+                <ProtectedRoute>
+                  <PodsPage />
                 </ProtectedRoute>
               }
             />

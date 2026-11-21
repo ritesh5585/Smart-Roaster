@@ -11,7 +11,7 @@ import {
 
 export default function LeavesPage() {
   const { user } = useAuth();
-  const canEdit = user?.role === "ADMIN" || user?.role === "MANAGER";
+  const canEdit = user?.role === "MANAGER";
 
   const [leaves, setLeaves] = useState<Leave[]>([]);
   const [activeEmployees, setActiveEmployees] = useState<Employee[]>([]);
@@ -51,15 +51,28 @@ export default function LeavesPage() {
       to,
     });
 
-    if (res.error) setError(res.error);
-    else if (res.data) setLeaves(res.data);
+    if (res.error) {
+      setError(res.error);
+      setLeaves([]);
+    } else {
+      setLeaves(Array.isArray(res.data) ? res.data : []);
+    }
     setLoading(false);
   };
 
   useEffect(() => {
+    let cancelled = false;
     api.getEmployees({ active: true }).then((r) => {
-      if (r.data) setActiveEmployees(r.data);
+      if (cancelled) return;
+      const emps = Array.isArray(r.data) ? r.data : [];
+      setActiveEmployees(emps);
+      if (emps.length > 0) {
+        setFormEmpId((prev) => prev || emps[0].id);
+      }
     });
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   useEffect(() => {
@@ -128,7 +141,7 @@ export default function LeavesPage() {
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
           <div>
             <h1 className="font-['Newsreader',Georgia,serif] text-3xl font-medium tracking-tight text-[#1D1C1A]">
-              Staff Leaves & Time Off
+              Staff Leaves &amp; Time Off
             </h1>
             <p className="mt-1 text-sm text-[#6B675F]">
               Review planned absences, medical leaves, and earned compensatory offs.
@@ -234,11 +247,10 @@ export default function LeavesPage() {
                         <td className="px-4 py-3 font-medium text-[#1D1C1A]">{empName}</td>
                         <td className="px-4 py-3">
                           <span
-                            className={`inline-block rounded-[6px] px-2 py-0.5 text-xs font-medium ${
-                              leave.type === "COMP_OFF"
+                            className={`inline-block rounded-[6px] px-2 py-0.5 text-xs font-medium ${leave.type === "COMP_OFF"
                                 ? "border border-[#B45309]/30 bg-[#B45309]/10 text-[#B45309]"
                                 : "bg-[#E4ECE6] text-[#1F4D3A]"
-                            }`}
+                              }`}
                           >
                             {leave.type === "COMP_OFF" ? "COMP OFF" : "LEAVE"}
                           </span>

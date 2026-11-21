@@ -12,10 +12,11 @@ declare global {
 
 export function requireAuth(req: Request, res: Response, next: NextFunction) {
   const token = req.cookies?.token;
-  if (!token)
+  if (!token) {
     return res.status(401).json({
       error: "Not authenticated",
     });
+  }
 
   try {
     const payload = jwt.verify(
@@ -31,7 +32,6 @@ export function requireAuth(req: Request, res: Response, next: NextFunction) {
   }
 }
 
-// Baad mein use hoga: router.post("/x", requireAuth, requireRole("ADMIN", "MANAGER"), handler)
 export const requireRole =
   (...roles: Role[]) =>
   (req: Request, res: Response, next: NextFunction) => {
@@ -42,3 +42,5 @@ export const requireRole =
     }
     next();
   };
+
+export const managerOnly = requireRole("MANAGER");

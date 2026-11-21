@@ -4,13 +4,13 @@ import {
   createEmployee,
   updateEmployee,
 } from "../controllers/employee.controller";
-import { requireAuth, requireRole } from "../middleware/requireAuth";
+import { requireAuth, managerOnly } from "../middleware/requireAuth";
 
 const router = Router();
 
 router.use(requireAuth);
 router.get("/", getEmployees);
-router.post("/", requireRole("ADMIN", "MANAGER"), createEmployee);
-router.patch("/:id", requireRole("ADMIN", "MANAGER"), updateEmployee);
+router.post("/", managerOnly, createEmployee);
+router.patch("/:id", managerOnly, updateEmployee);
 
 export default router;

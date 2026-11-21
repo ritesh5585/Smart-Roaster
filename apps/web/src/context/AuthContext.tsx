@@ -5,8 +5,6 @@ interface AuthState {
   user: ApiUser | null;
   loading: boolean;
   login: (email: string, password: string) => Promise<string | null>;
-  register: (name: string, email: string, password: string) => Promise<string | null>;
-  googleLogin: (credential: string) => Promise<string | null>;
   logout: () => Promise<void>;
 }
 
@@ -16,7 +14,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<ApiUser | null>(null);
   const [loading, setLoading] = useState(true);
 
-  // On mount, check if we have a valid session cookie
   useEffect(() => {
     api.me().then((r) => {
       if (r.data) setUser(r.data.user);
@@ -31,27 +28,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return null;
   };
 
-  const register = async (name: string, email: string, password: string) => {
-    const r = await api.register({ name, email, password });
-    if (r.error) return r.error;
-    setUser(r.data!.user);
-    return null;
-  };
-
-  const googleLogin = async (credential: string) => {
-    const r = await api.googleLogin(credential);
-    if (r.error) return r.error;
-    setUser(r.data!.user);
-    return null;
-  };
-
   const logout = async () => {
     await api.logout();
     setUser(null);
   };
 
   return (
-    <AuthContext.Provider value={{ user, loading, login, register, googleLogin, logout }}>
+    <AuthContext.Provider value={{ user, loading, login, logout }}>
       {children}
     </AuthContext.Provider>
   );

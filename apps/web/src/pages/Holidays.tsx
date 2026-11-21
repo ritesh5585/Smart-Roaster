@@ -6,7 +6,7 @@ import { formatDisplayDate, getWeekdayName, getTodayDateString } from "../lib/da
 
 export default function HolidaysPage() {
   const { user } = useAuth();
-  const canEdit = user?.role === "ADMIN" || user?.role === "MANAGER";
+  const canEdit = user?.role === "MANAGER";
 
   const currentYear = new Date().getUTCFullYear();
   const [selectedYear, setSelectedYear] = useState<number>(currentYear);
@@ -25,8 +25,12 @@ export default function HolidaysPage() {
     setLoading(true);
     setError(null);
     const res = await api.getHolidays({ year: selectedYear });
-    if (res.error) setError(res.error);
-    else if (res.data) setHolidays(res.data);
+    if (res.error) {
+      setError(res.error);
+      setHolidays([]);
+    } else {
+      setHolidays(Array.isArray(res.data) ? res.data : []);
+    }
     setLoading(false);
   };
 

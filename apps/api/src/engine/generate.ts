@@ -1,20 +1,38 @@
-import type { EngineInput, RosterEntry, Issue, OperatingRule, DayStatus } from "./types";
+import type {
+  EngineInput,
+  RosterEntry,
+  Issue,
+  OperatingRule,
+  DayStatus,
+} from "./types";
 import { monthDates, weekSegments, weekdayOf, isInRange } from "./dates";
 import { validateRoster } from "./validate";
 
-export function isOperating(rule: OperatingRule, date: string, holidaySet: Set<string>): boolean {
+export function isOperating(
+  rule: OperatingRule,
+  date: string,
+  holidaySet: Set<string>,
+): boolean {
   if (rule === "ALL_365") return true;
   if (rule === "EXCEPT_HOLIDAYS") return !holidaySet.has(date);
-  if (rule === "NO_SUN_HOLIDAYS") return weekdayOf(date) !== 0 && !holidaySet.has(date);
+  if (rule === "NO_SUN_HOLIDAYS")
+    return weekdayOf(date) !== 0 && !holidaySet.has(date);
   return true;
 }
 
-export function generateRoster(input: EngineInput): { entries: RosterEntry[]; issues: Issue[] } {
+export function generateRoster(input: EngineInput): {
+  entries: RosterEntry[];
+  issues: Issue[];
+} {
   // Deterministic sorting of inputs
-  const employees = [...input.employees].sort((a, b) => a.id.localeCompare(b.id));
+  const employees = [...input.employees].sort((a, b) =>
+    a.id.localeCompare(b.id),
+  );
   const validEmpIds = new Set(employees.map((e) => e.id));
 
-  const brandProcesses = [...input.brandProcesses].sort((a, b) => a.id.localeCompare(b.id));
+  const brandProcesses = [...input.brandProcesses].sort((a, b) =>
+    a.id.localeCompare(b.id),
+  );
   const bpMap = new Map(brandProcesses.map((bp) => [bp.id, bp]));
 
   // Assigned brand-processes per employee
@@ -25,7 +43,11 @@ export function generateRoster(input: EngineInput): { entries: RosterEntry[]; is
 
   const sortedAssignments = [...input.assignments]
     .filter((a) => validEmpIds.has(a.employeeId) && bpMap.has(a.brandProcessId))
-    .sort((a, b) => a.employeeId.localeCompare(b.employeeId) || a.brandProcessId.localeCompare(b.brandProcessId));
+    .sort(
+      (a, b) =>
+        a.employeeId.localeCompare(b.employeeId) ||
+        a.brandProcessId.localeCompare(b.brandProcessId),
+    );
 
   for (const a of sortedAssignments) {
     const bp = bpMap.get(a.brandProcessId);
@@ -39,7 +61,11 @@ export function generateRoster(input: EngineInput): { entries: RosterEntry[]; is
 
   const leaves = [...input.leaves]
     .filter((l) => validEmpIds.has(l.employeeId))
-    .sort((a, b) => a.employeeId.localeCompare(b.employeeId) || a.startDate.localeCompare(b.startDate));
+    .sort(
+      (a, b) =>
+        a.employeeId.localeCompare(b.employeeId) ||
+        a.startDate.localeCompare(b.startDate),
+    );
 
   const dates = monthDates(input.year, input.month);
   const segments = weekSegments(dates);
@@ -56,7 +82,10 @@ export function generateRoster(input: EngineInput): { entries: RosterEntry[]; is
 
     for (const date of dates) {
       const key = `${emp.id}:${date}`;
-      const leave = leaves.find((l) => l.employeeId === emp.id && isInRange(date, l.startDate, l.endDate));
+      const leave = leaves.find(
+        (l) =>
+          l.employeeId === emp.id && isInRange(date, l.startDate, l.endDate),
+      );
 
       if (leave) {
         statusMap.set(key, leave.type);
@@ -67,7 +96,9 @@ export function generateRoster(input: EngineInput): { entries: RosterEntry[]; is
           statusMap.set(key, "WORKING");
         }
       } else {
-        const anyOperates = assignedBps.some((bp) => isOperating(bp.operatingRule, date, holidaySet));
+        const anyOperates = assignedBps.some((bp) =>
+          isOperating(bp.operatingRule, date, holidaySet),
+        );
         if (!anyOperates) {
           if (holidaySet.has(date)) {
             statusMap.set(key, "HOLIDAY");
@@ -89,7 +120,9 @@ export function generateRoster(input: EngineInput): { entries: RosterEntry[]; is
       if (isOperating(bp.operatingRule, date, holidaySet)) {
         let count = 0;
         for (const emp of employees) {
-          const isAssigned = sortedAssignments.some((a) => a.employeeId === emp.id && a.brandProcessId === bp.id);
+          const isAssigned = sortedAssignments.some(
+            (a) => a.employeeId === emp.id && a.brandProcessId === bp.id,
+          );
           if (isAssigned && statusMap.get(`${emp.id}:${date}`) === "WORKING") {
             count++;
           }
@@ -115,12 +148,16 @@ export function generateRoster(input: EngineInput): { entries: RosterEntry[]; is
 
     for (const segment of segments) {
       if (segment.length >= 4) {
-        const hasNonWorking = segment.some((date) => statusMap.get(`${emp.id}:${date}`) !== "WORKING");
+        const hasNonWorking = segment.some(
+          (date) => statusMap.get(`${emp.id}:${date}`) !== "WORKING",
+        );
         if (!hasNonWorking) {
           // Count initial feasible days in segment
           let feasibleCount = 0;
           for (const date of segment) {
-            const opBps = assignedBps.filter((bp) => isOperating(bp.operatingRule, date, holidaySet));
+            const opBps = assignedBps.filter((bp) =>
+              isOperating(bp.operatingRule, date, holidaySet),
+            );
             const isFeasible = opBps.every((bp) => {
               const current = coverageCounts.get(`${bp.id}:${date}`) ?? 0;
               return current - 1 >= bp.minCoverage;
@@ -155,7 +192,9 @@ export function generateRoster(input: EngineInput): { entries: RosterEntry[]; is
     const assignedBps = assignedBpsByEmployee.get(emp.id) ?? [];
 
     // Candidate days = days in the segment where the employee is "WORKING"
-    const candidateDays = need.segment.filter((date) => statusMap.get(`${emp.id}:${date}`) === "WORKING");
+    const candidateDays = need.segment.filter(
+      (date) => statusMap.get(`${emp.id}:${date}`) === "WORKING",
+    );
     if (candidateDays.length === 0) continue;
 
     interface DayEvaluation {
@@ -168,7 +207,9 @@ export function generateRoster(input: EngineInput): { entries: RosterEntry[]; is
     const evaluations: DayEvaluation[] = [];
 
     for (const date of candidateDays) {
-      const opBps = assignedBps.filter((bp) => isOperating(bp.operatingRule, date, holidaySet));
+      const opBps = assignedBps.filter((bp) =>
+        isOperating(bp.operatingRule, date, holidaySet),
+      );
 
       if (opBps.length === 0) {
         evaluations.push({
@@ -206,7 +247,9 @@ export function generateRoster(input: EngineInput): { entries: RosterEntry[]; is
       // a) among feasible days: preferredOffDay weekday if present, else highest slack, tie -> earliest date
       let prefMatch: DayEvaluation | undefined;
       if (emp.preferredOffDay !== null) {
-        prefMatch = feasibleDays.find((e) => weekdayOf(e.date) === emp.preferredOffDay);
+        prefMatch = feasibleDays.find(
+          (e) => weekdayOf(e.date) === emp.preferredOffDay,
+        );
       }
 
       if (prefMatch) {
@@ -234,7 +277,9 @@ export function generateRoster(input: EngineInput): { entries: RosterEntry[]; is
     // Set status "WEEKOFF" and decrement the affected coverage counts
     statusMap.set(`${emp.id}:${chosenDate}`, "WEEKOFF");
 
-    const affectedOpBps = assignedBps.filter((bp) => isOperating(bp.operatingRule, chosenDate, holidaySet));
+    const affectedOpBps = assignedBps.filter((bp) =>
+      isOperating(bp.operatingRule, chosenDate, holidaySet),
+    );
     for (const bp of affectedOpBps) {
       const current = coverageCounts.get(`${bp.id}:${chosenDate}`) ?? 0;
       coverageCounts.set(`${bp.id}:${chosenDate}`, current - 1);

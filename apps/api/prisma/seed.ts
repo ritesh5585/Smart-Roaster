@@ -1,9 +1,58 @@
 import { PrismaClient, OperatingRule, LeaveType } from "@prisma/client";
+import bcrypt from "bcryptjs";
 
 const prisma = new PrismaClient();
 
 async function main() {
   console.log("Seeding master data...");
+
+  const managerPassword = process.env.SEED_MANAGER_PASSWORD;
+  const viewerPassword = process.env.SEED_VIEWER_PASSWORD;
+
+  if (!managerPassword) {
+    throw new Error(
+      "Missing required environment variable: SEED_MANAGER_PASSWORD",
+    );
+  }
+  if (!viewerPassword) {
+    throw new Error(
+      "Missing required environment variable: SEED_VIEWER_PASSWORD",
+    );
+  }
+
+  const managerEmail = process.env.SEED_MANAGER_EMAIL || "manager@demo.com";
+  const viewerEmail = "viewer@demo.com";
+
+  await prisma.user.upsert({
+    where: { email: managerEmail },
+    update: {
+      name: "Demo Manager",
+      passwordHash: await bcrypt.hash(managerPassword, 12),
+      role: "MANAGER",
+    },
+    create: {
+      email: managerEmail,
+      name: "Demo Manager",
+      passwordHash: await bcrypt.hash(managerPassword, 12),
+      role: "MANAGER",
+    },
+  });
+
+  await prisma.user.upsert({
+    where: { email: viewerEmail },
+    update: {
+      name: "Demo Viewer",
+      passwordHash: await bcrypt.hash(viewerPassword, 12),
+      role: "VIEWER",
+    },
+    create: {
+      email: viewerEmail,
+      name: "Demo Viewer",
+      passwordHash: await bcrypt.hash(viewerPassword, 12),
+      role: "VIEWER",
+    },
+  });
+  console.log("Users seeded (manager, viewer).");
 
   // 1. Processes
   const processDefs = [
@@ -342,7 +391,10 @@ async function main() {
       brandProcessMap[bDef.name][p.code] = bp.id;
     }
   }
-  console.log("Brands and BrandProcesses seeded:", Object.keys(brandProcessMap).length);
+  console.log(
+    "Brands and BrandProcesses seeded:",
+    Object.keys(brandProcessMap).length,
+  );
 
   // 4. Assignments
   const singleResourceBrandNames = [
@@ -367,7 +419,8 @@ async function main() {
     "Heads Up For Tails", // Emp 31
   ];
 
-  const assignmentRecords: { employeeId: string; brandProcessId: string }[] = [];
+  const assignmentRecords: { employeeId: string; brandProcessId: string }[] =
+    [];
 
   // Assign single-resource brands
   singleResourceBrandNames.forEach((bName, idx) => {
@@ -375,7 +428,10 @@ async function main() {
     const empId = employeeList[empIdx].id;
     const bpObj = brandProcessMap[bName];
     for (const pCode of Object.keys(bpObj)) {
-      assignmentRecords.push({ employeeId: empId, brandProcessId: bpObj[pCode] });
+      assignmentRecords.push({
+        employeeId: empId,
+        brandProcessId: bpObj[pCode],
+      });
     }
   });
 

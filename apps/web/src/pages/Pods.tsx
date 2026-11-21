@@ -5,7 +5,7 @@ import { api, type Pod, type Employee } from "../lib/api";
 
 export default function PodsPage() {
   const { user } = useAuth();
-  const canEdit = user?.role === "ADMIN" || user?.role === "MANAGER";
+  const canEdit = user?.role === "MANAGER";
 
   const [pods, setPods] = useState<Pod[]>([]);
   const [allEmployees, setAllEmployees] = useState<Employee[]>([]);

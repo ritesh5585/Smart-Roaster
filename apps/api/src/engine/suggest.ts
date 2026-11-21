@@ -1,10 +1,16 @@
-import type { EngineInput, RosterEntry, Issue, Suggestion, DayStatus } from "./types";
+import type {
+  EngineInput,
+  RosterEntry,
+  Issue,
+  Suggestion,
+  DayStatus,
+} from "./types";
 import { isInRange } from "./dates";
 
 export function suggestBackups(
   input: EngineInput,
   entries: RosterEntry[],
-  issue: Issue
+  issue: Issue,
 ): Suggestion[] {
   if (issue.type !== "COVERAGE_GAP" || !issue.date || !issue.brandProcessId) {
     return [];
@@ -16,21 +22,25 @@ export function suggestBackups(
   if (!targetBp) return [];
 
   // Index valid employees
-  const validEmployees = [...input.employees].sort((a, b) => a.id.localeCompare(b.id));
+  const validEmployees = [...input.employees].sort((a, b) =>
+    a.id.localeCompare(b.id),
+  );
   const validEmpIds = new Set(validEmployees.map((e) => e.id));
 
   // Assigned employees to target brandProcess
   const assignedToTarget = new Set(
     input.assignments
-      .filter((a) => a.brandProcessId === targetBpId && validEmpIds.has(a.employeeId))
-      .map((a) => a.employeeId)
+      .filter(
+        (a) => a.brandProcessId === targetBpId && validEmpIds.has(a.employeeId),
+      )
+      .map((a) => a.employeeId),
   );
 
   // Pods of assigned employees
   const assignedPods = new Set(
     validEmployees
       .filter((e) => assignedToTarget.has(e.id) && e.podId !== null)
-      .map((e) => e.podId!)
+      .map((e) => e.podId!),
   );
 
   // Assignments for each employee
@@ -57,7 +67,9 @@ export function suggestBackups(
   }
 
   const getEffectiveStatus = (empId: string, date: string): DayStatus => {
-    const leave = leaves.find((l) => l.employeeId === empId && isInRange(date, l.startDate, l.endDate));
+    const leave = leaves.find(
+      (l) => l.employeeId === empId && isInRange(date, l.startDate, l.endDate),
+    );
     if (leave) {
       return leave.type;
     }
@@ -65,7 +77,9 @@ export function suggestBackups(
   };
 
   // Candidates: employees NOT assigned to issue.brandProcessId
-  const candidates = validEmployees.filter((emp) => !assignedToTarget.has(emp.id));
+  const candidates = validEmployees.filter(
+    (emp) => !assignedToTarget.has(emp.id),
+  );
 
   const suggestions: Suggestion[] = [];
 
@@ -76,7 +90,8 @@ export function suggestBackups(
       continue;
     }
 
-    const kind: Suggestion["kind"] = status === "WORKING" ? "CROSS_COVER" : "SWAP_WEEKOFF";
+    const kind: Suggestion["kind"] =
+      status === "WORKING" ? "CROSS_COVER" : "SWAP_WEEKOFF";
 
     let score = 0;
     const reasons: string[] = [];
@@ -92,14 +107,17 @@ export function suggestBackups(
     const candidateBps = empAssignedBps.get(candidate.id) ?? [];
 
     // +2 if the employee is assigned to any brand-process with the same processCode
-    const hasSameProcess = candidateBps.some((bp) => bp.processCode === targetBp.processCode);
+    const hasSameProcess = candidateBps.some(
+      (bp) => bp.processCode === targetBp.processCode,
+    );
     if (hasSameProcess) {
       score += 2;
       reasons.push(`same process (${targetBp.processCode})`);
     }
 
     // +1 if same podId as any employee assigned to the gap's brand-process
-    const hasSamePod = candidate.podId !== null && assignedPods.has(candidate.podId);
+    const hasSamePod =
+      candidate.podId !== null && assignedPods.has(candidate.podId);
     if (hasSamePod) {
       score += 1;
       reasons.push("shared pod");
@@ -121,7 +139,9 @@ export function suggestBackups(
   }
 
   // Sort by score desc then employeeId
-  suggestions.sort((a, b) => b.score - a.score || a.employeeId.localeCompare(b.employeeId));
+  suggestions.sort(
+    (a, b) => b.score - a.score || a.employeeId.localeCompare(b.employeeId),
+  );
 
   // Max 5
   return suggestions.slice(0, 5);

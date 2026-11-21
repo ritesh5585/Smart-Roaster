@@ -1,11 +1,10 @@
 import { useState, type FormEvent } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
-import { GoogleLogin, type CredentialResponse } from "@react-oauth/google";
 import { RosterMark } from "../components/Navbar";
 
 export default function LoginPage() {
-  const { login, googleLogin } = useAuth();
+  const { login } = useAuth();
   const navigate = useNavigate();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -18,16 +17,6 @@ export default function LoginPage() {
     setError(null);
     setSubmitting(true);
     const err = await login(email, password);
-    setSubmitting(false);
-    if (err) return setError(err);
-    navigate("/");
-  };
-
-  const handleGoogle = async (res: CredentialResponse) => {
-    if (!res.credential) return setError("Google login failed");
-    setError(null);
-    setSubmitting(true);
-    const err = await googleLogin(res.credential);
     setSubmitting(false);
     if (err) return setError(err);
     navigate("/");
@@ -59,12 +48,13 @@ export default function LoginPage() {
               return (
                 <div
                   key={i}
-                  className={`h-7 rounded-[4px] border ${isWarn
+                  className={`h-7 rounded-[4px] border ${
+                    isWarn
                       ? "border-[#B45309] bg-[#B45309]/20"
                       : isFilled
                         ? "border-[#1F4D3A] bg-[#1F4D3A]"
                         : "border-[#3D3A34] bg-[#262420]/50"
-                    }`}
+                  }`}
                 />
               );
             })}
@@ -133,7 +123,6 @@ export default function LoginPage() {
                     id="password"
                     type={showPassword ? "text" : "password"}
                     required
-                    minLength={8}
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     className="block w-full rounded-[6px] border border-[#E2DDD3] bg-[#FFFFFF] px-3 py-2 pr-10 text-sm text-[#1D1C1A] focus:border-[#1F4D3A] focus:outline-none focus:ring-1 focus:ring-[#1F4D3A]"
@@ -166,26 +155,6 @@ export default function LoginPage() {
                 {submitting ? "Signing in..." : "Sign in"}
               </button>
             </form>
-
-            <div className="relative my-6">
-              <div className="absolute inset-0 flex items-center">
-                <div className="w-full border-t border-[#E2DDD3]" />
-              </div>
-              <div className="relative flex justify-center text-xs">
-                <span className="bg-[#FFFFFF] px-2 text-[#6B675F]">or</span>
-              </div>
-            </div>
-
-            <div className="flex justify-center">
-              <GoogleLogin onSuccess={handleGoogle} onError={() => setError("Google login failed")} />
-            </div>
-
-            <p className="mt-6 text-center text-xs text-[#6B675F]">
-              Need an account?{" "}
-              <Link to="/register" className="font-medium text-[#1F4D3A] hover:underline">
-                Register here
-              </Link>
-            </p>
           </div>
         </div>
       </div>

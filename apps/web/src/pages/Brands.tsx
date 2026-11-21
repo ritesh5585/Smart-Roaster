@@ -17,7 +17,7 @@ const RULE_LABELS: Record<OperatingRule, string> = {
 
 export default function BrandsPage() {
   const { user } = useAuth();
-  const canEdit = user?.role === "ADMIN" || user?.role === "MANAGER";
+  const canEdit = user?.role === "MANAGER";
 
   const [brands, setBrands] = useState<Brand[]>([]);
   const [allProcesses, setAllProcesses] = useState<Process[]>([]);

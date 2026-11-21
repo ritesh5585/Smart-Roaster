@@ -4,13 +4,13 @@ import {
   createLeave,
   deleteLeave,
 } from "../controllers/leave.controller";
-import { requireAuth, requireRole } from "../middleware/requireAuth";
+import { requireAuth, managerOnly } from "../middleware/requireAuth";
 
 const router = Router();
 
 router.use(requireAuth);
 router.get("/", getLeaves);
-router.post("/", requireRole("ADMIN", "MANAGER"), createLeave);
-router.delete("/:id", requireRole("ADMIN", "MANAGER"), deleteLeave);
+router.post("/", managerOnly, createLeave);
+router.delete("/:id", managerOnly, deleteLeave);
 
 export default router;

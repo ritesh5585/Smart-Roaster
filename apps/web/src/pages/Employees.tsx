@@ -3,11 +3,9 @@ import Navbar from "../components/Navbar";
 import { useAuth } from "../context/AuthContext";
 import { api, type Employee, type Pod } from "../lib/api";
 
-const DAY_NAMES = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
-
 export default function EmployeesPage() {
   const { user } = useAuth();
-  const canEdit = user?.role === "ADMIN" || user?.role === "MANAGER";
+  const canEdit = user?.role === "MANAGER";
 
   const [employees, setEmployees] = useState<Employee[]>([]);
   const [pods, setPods] = useState<Pod[]>([]);
@@ -195,7 +193,6 @@ export default function EmployeesPage() {
                   <th className="px-4 py-3 font-medium">Name</th>
                   <th className="px-4 py-3 font-medium">Email</th>
                   <th className="px-4 py-3 font-medium">Pod</th>
-                  <th className="px-4 py-3 font-medium">Pref. off</th>
                   <th className="px-4 py-3 font-medium text-center">Assignments</th>
                   <th className="px-4 py-3 font-medium">Status</th>
                   {canEdit && <th className="px-4 py-3 font-medium text-right">Actions</th>}
@@ -204,13 +201,13 @@ export default function EmployeesPage() {
               <tbody className="divide-y divide-[#E2DDD3]">
                 {loading ? (
                   <tr>
-                    <td colSpan={canEdit ? 7 : 6} className="py-8 text-center text-sm text-[#6B675F]">
+                    <td colSpan={canEdit ? 6 : 5} className="py-8 text-center text-sm text-[#6B675F]">
                       Loading staff records…
                     </td>
                   </tr>
                 ) : filteredEmployees.length === 0 ? (
                   <tr>
-                    <td colSpan={canEdit ? 7 : 6} className="py-8 text-center text-sm text-[#6B675F]">
+                    <td colSpan={canEdit ? 6 : 5} className="py-8 text-center text-sm text-[#6B675F]">
                       No employees found.
                     </td>
                   </tr>
@@ -220,21 +217,15 @@ export default function EmployeesPage() {
                       <td className="px-4 py-3 font-medium text-[#1D1C1A]">{emp.name}</td>
                       <td className="px-4 py-3 text-[#6B675F]">{emp.email || "—"}</td>
                       <td className="px-4 py-3 text-[#1D1C1A]">{emp.pod?.name || "Unassigned"}</td>
-                      <td className="px-4 py-3 text-xs text-[#6B675F]">
-                        {emp.preferredOffDay !== null && emp.preferredOffDay !== undefined
-                          ? DAY_NAMES[emp.preferredOffDay] ?? "—"
-                          : "—"}
-                      </td>
                       <td className="px-4 py-3 text-center text-[#1D1C1A]">
                         {emp._count?.assignments ?? 0}
                       </td>
                       <td className="px-4 py-3">
                         <span
-                          className={`inline-block rounded-[6px] px-2 py-0.5 text-xs font-medium ${
-                            emp.isActive
-                              ? "bg-[#E4ECE6] text-[#1F4D3A]"
-                              : "bg-[#E2DDD3]/50 text-[#6B675F]"
-                          }`}
+                          className={`inline-block rounded-[6px] px-2 py-0.5 text-xs font-medium ${emp.isActive
+                            ? "bg-[#E4ECE6] text-[#1F4D3A]"
+                            : "bg-[#E2DDD3]/50 text-[#6B675F]"
+                            }`}
                         >
                           {emp.isActive ? "Active" : "Inactive"}
                         </span>
@@ -251,11 +242,10 @@ export default function EmployeesPage() {
                           <button
                             type="button"
                             onClick={() => toggleStatus(emp)}
-                            className={`text-xs font-medium ${
-                              emp.isActive
-                                ? "text-[#A3262A] hover:underline"
-                                : "text-[#1F4D3A] hover:underline"
-                            }`}
+                            className={`text-xs font-medium ${emp.isActive
+                              ? "text-[#A3262A] hover:underline"
+                              : "text-[#1F4D3A] hover:underline"
+                              }`}
                           >
                             {emp.isActive ? "Deactivate" : "Activate"}
                           </button>
@@ -332,14 +322,14 @@ export default function EmployeesPage() {
           {editingEmp && (
             <div>
               <label className="block text-xs font-medium uppercase tracking-wider text-[#6B675F]">
-                Preferred Weekly Off
+                Preferred weekly off
               </label>
               <select
                 value={formData.preferredOffDay === null ? "" : String(formData.preferredOffDay)}
                 onChange={(e) =>
                   setFormData({
                     ...formData,
-                    preferredOffDay: e.target.value === "" ? null : Number(e.target.value),
+                    preferredOffDay: e.target.value === "" ? null : parseInt(e.target.value, 10),
                   })
                 }
                 className="mt-1 block w-full rounded-[6px] border border-[#E2DDD3] bg-[#FFFFFF] px-3 py-1.5 text-sm text-[#1D1C1A] focus:border-[#1F4D3A] focus:outline-none focus:ring-1 focus:ring-[#1F4D3A]"

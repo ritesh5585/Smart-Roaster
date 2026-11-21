@@ -4,6 +4,12 @@ import cors from "cors";
 import helmet from "helmet";
 import cookieParser from "cookie-parser";
 import authRoutes from "./routes/auth.routes";
+import podRoutes from "./routes/pod.routes";
+import employeeRoutes from "./routes/employee.routes";
+import processRoutes from "./routes/process.routes";
+import brandRoutes from "./routes/brand.routes";
+import brandProcessRoutes from "./routes/brand-process.routes";
+import assignmentRoutes from "./routes/assignment.routes";
 
 for (const key of [
   "DATABASE_URL",
@@ -25,6 +31,12 @@ app.use(cookieParser());
 
 app.get("/health", (_req, res) => res.json({ ok: true }));
 app.use("/auth", authRoutes);
+app.use("/pods", podRoutes);
+app.use("/employees", employeeRoutes);
+app.use("/processes", processRoutes);
+app.use("/brands", brandRoutes);
+app.use("/brand-processes", brandProcessRoutes);
+app.use("/assignments", assignmentRoutes);
 
 const port = Number(process.env.PORT) || 4000;
 app.listen(port, () => console.log(`API running on :${port}`));

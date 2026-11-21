@@ -59,13 +59,12 @@ export default function LoginPage() {
               return (
                 <div
                   key={i}
-                  className={`h-7 rounded-[4px] border ${
-                    isWarn
+                  className={`h-7 rounded-[4px] border ${isWarn
                       ? "border-[#B45309] bg-[#B45309]/20"
                       : isFilled
-                      ? "border-[#1F4D3A] bg-[#1F4D3A]"
-                      : "border-[#3D3A34] bg-[#262420]/50"
-                  }`}
+                        ? "border-[#1F4D3A] bg-[#1F4D3A]"
+                        : "border-[#3D3A34] bg-[#262420]/50"
+                    }`}
                 />
               );
             })}

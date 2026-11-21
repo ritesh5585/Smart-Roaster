@@ -4,13 +4,13 @@ import {
   updateBrandProcess,
   deleteBrandProcess,
 } from "../controllers/brand-process.controller";
-import { requireAuth, requireRole } from "../middleware/requireAuth";
+import { requireAuth, managerOnly } from "../middleware/requireAuth";
 
 const router = Router();
 
 router.use(requireAuth);
-router.post("/", requireRole("ADMIN", "MANAGER"), createBrandProcess);
-router.patch("/:id", requireRole("ADMIN", "MANAGER"), updateBrandProcess);
-router.delete("/:id", requireRole("ADMIN", "MANAGER"), deleteBrandProcess);
+router.post("/", managerOnly, createBrandProcess);
+router.patch("/:id", managerOnly, updateBrandProcess);
+router.delete("/:id", managerOnly, deleteBrandProcess);
 
 export default router;

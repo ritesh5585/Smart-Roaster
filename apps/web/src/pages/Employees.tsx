@@ -5,7 +5,7 @@ import { api, type Employee, type Pod } from "../lib/api";
 
 export default function EmployeesPage() {
   const { user } = useAuth();
-  const canEdit = user?.role === "ADMIN" || user?.role === "MANAGER";
+  const canEdit = user?.role === "MANAGER";
 
   const [employees, setEmployees] = useState<Employee[]>([]);
   const [pods, setPods] = useState<Pod[]>([]);
@@ -19,11 +19,18 @@ export default function EmployeesPage() {
   // Modal State
   const dialogRef = useRef<HTMLDialogElement>(null);
   const [editingEmp, setEditingEmp] = useState<Employee | null>(null);
-  const [formData, setFormData] = useState({
+  const [formData, setFormData] = useState<{
+    name: string;
+    email: string;
+    podId: string;
+    isActive: boolean;
+    preferredOffDay: number | null;
+  }>({
     name: "",
     email: "",
     podId: "",
     isActive: true,
+    preferredOffDay: null,
   });
   const [submitting, setSubmitting] = useState(false);
   const [modalError, setModalError] = useState<string | null>(null);
@@ -49,7 +56,7 @@ export default function EmployeesPage() {
 
   const openAddModal = () => {
     setEditingEmp(null);
-    setFormData({ name: "", email: "", podId: "", isActive: true });
+    setFormData({ name: "", email: "", podId: "", isActive: true, preferredOffDay: null });
     setModalError(null);
     dialogRef.current?.showModal();
   };
@@ -61,6 +68,7 @@ export default function EmployeesPage() {
       email: emp.email || "",
       podId: emp.podId || "",
       isActive: emp.isActive,
+      preferredOffDay: emp.preferredOffDay ?? null,
     });
     setModalError(null);
     dialogRef.current?.showModal();
@@ -81,6 +89,7 @@ export default function EmployeesPage() {
         email: formData.email.trim() || null,
         podId: formData.podId || null,
         isActive: formData.isActive,
+        preferredOffDay: formData.preferredOffDay,
       });
       if (res.error) {
         setModalError(res.error);
@@ -214,8 +223,8 @@ export default function EmployeesPage() {
                       <td className="px-4 py-3">
                         <span
                           className={`inline-block rounded-[6px] px-2 py-0.5 text-xs font-medium ${emp.isActive
-                              ? "bg-[#E4ECE6] text-[#1F4D3A]"
-                              : "bg-[#E2DDD3]/50 text-[#6B675F]"
+                            ? "bg-[#E4ECE6] text-[#1F4D3A]"
+                            : "bg-[#E2DDD3]/50 text-[#6B675F]"
                             }`}
                         >
                           {emp.isActive ? "Active" : "Inactive"}
@@ -234,8 +243,8 @@ export default function EmployeesPage() {
                             type="button"
                             onClick={() => toggleStatus(emp)}
                             className={`text-xs font-medium ${emp.isActive
-                                ? "text-[#A3262A] hover:underline"
-                                : "text-[#1F4D3A] hover:underline"
+                              ? "text-[#A3262A] hover:underline"
+                              : "text-[#1F4D3A] hover:underline"
                               }`}
                           >
                             {emp.isActive ? "Deactivate" : "Activate"}
@@ -309,6 +318,36 @@ export default function EmployeesPage() {
               ))}
             </select>
           </div>
+
+          {editingEmp && (
+            <div>
+              <label className="block text-xs font-medium uppercase tracking-wider text-[#6B675F]">
+                Preferred weekly off
+              </label>
+              <select
+                value={formData.preferredOffDay === null ? "" : String(formData.preferredOffDay)}
+                onChange={(e) =>
+                  setFormData({
+                    ...formData,
+                    preferredOffDay: e.target.value === "" ? null : parseInt(e.target.value, 10),
+                  })
+                }
+                className="mt-1 block w-full rounded-[6px] border border-[#E2DDD3] bg-[#FFFFFF] px-3 py-1.5 text-sm text-[#1D1C1A] focus:border-[#1F4D3A] focus:outline-none focus:ring-1 focus:ring-[#1F4D3A]"
+              >
+                <option value="">None</option>
+                <option value="0">Sunday</option>
+                <option value="1">Monday</option>
+                <option value="2">Tuesday</option>
+                <option value="3">Wednesday</option>
+                <option value="4">Thursday</option>
+                <option value="5">Friday</option>
+                <option value="6">Saturday</option>
+              </select>
+              <p className="mt-1 text-xs text-[#6B675F]">
+                A preference only. Client coverage always takes priority.
+              </p>
+            </div>
+          )}
 
           {editingEmp && (
             <label className="flex items-center gap-2 cursor-pointer pt-1 text-sm text-[#1D1C1A]">

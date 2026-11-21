@@ -12,12 +12,12 @@ import brandProcessRoutes from "./routes/brand-process.routes";
 import assignmentRoutes from "./routes/assignment.routes";
 import holidayRoutes from "./routes/holiday.routes";
 import leaveRoutes from "./routes/leave.routes";
+import rosterRoutes from "./routes/roster.routes";
 
 for (const key of [
   "DATABASE_URL",
   "JWT_SECRET",
   "CLIENT_ORIGIN",
-  "GOOGLE_CLIENT_ID",
 ]) {
   if (!process.env[key]) throw new Error(`Missing env var: ${key}`);
 }
@@ -41,6 +41,7 @@ app.use("/brand-processes", brandProcessRoutes);
 app.use("/assignments", assignmentRoutes);
 app.use("/holidays", holidayRoutes);
 app.use("/leaves", leaveRoutes);
+app.use("/rosters", rosterRoutes);
 
 const port = Number(process.env.PORT) || 4000;
 app.listen(port, () => console.log(`API running on :${port}`));

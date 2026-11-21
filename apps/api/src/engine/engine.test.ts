@@ -23,7 +23,9 @@ describe("Roster Engine", () => {
   // with the employee in details.reasons as WEEKOFF, and a SINGLE_POINT_OF_FAILURE warning.
   it("1. Single employee, ALL_365, minCoverage 1: has COVERAGE_GAP on weekly off and SINGLE_POINT_OF_FAILURE", () => {
     const input = createFixture({
-      employees: [{ id: "emp1", name: "Rahul", podId: null, preferredOffDay: null }],
+      employees: [
+        { id: "emp1", name: "Rahul", podId: null, preferredOffDay: null },
+      ],
       brandProcesses: [
         {
           id: "bp1",
@@ -43,7 +45,10 @@ describe("Roster Engine", () => {
 
     const firstOff = offEntries[0];
     const gapOnFirstOff = issues.find(
-      (i) => i.type === "COVERAGE_GAP" && i.date === firstOff.date && i.brandProcessId === "bp1"
+      (i) =>
+        i.type === "COVERAGE_GAP" &&
+        i.date === firstOff.date &&
+        i.brandProcessId === "bp1",
     );
     expect(gapOnFirstOff).toBeDefined();
     expect(gapOnFirstOff?.details?.reasons).toEqual([
@@ -51,7 +56,7 @@ describe("Roster Engine", () => {
     ]);
 
     const spof = issues.find(
-      (i) => i.type === "SINGLE_POINT_OF_FAILURE" && i.brandProcessId === "bp1"
+      (i) => i.type === "SINGLE_POINT_OF_FAILURE" && i.brandProcessId === "bp1",
     );
     expect(spof).toBeDefined();
     expect(spof?.severity).toBe("WARNING");
@@ -90,10 +95,16 @@ describe("Roster Engine", () => {
 
     for (const segment of segments) {
       const emp1Offs = entries.filter(
-        (e) => e.employeeId === "emp1" && e.status === "WEEKOFF" && segment.includes(e.date)
+        (e) =>
+          e.employeeId === "emp1" &&
+          e.status === "WEEKOFF" &&
+          segment.includes(e.date),
       );
       const emp2Offs = entries.filter(
-        (e) => e.employeeId === "emp2" && e.status === "WEEKOFF" && segment.includes(e.date)
+        (e) =>
+          e.employeeId === "emp2" &&
+          e.status === "WEEKOFF" &&
+          segment.includes(e.date),
       );
 
       for (const off1 of emp1Offs) {
@@ -107,7 +118,9 @@ describe("Roster Engine", () => {
   // 3. Sole employee has a leave on a required day: COVERAGE_GAP with reason LEAVE on exactly those days.
   it("3. Sole employee has a leave on a required day: COVERAGE_GAP with reason LEAVE on exactly those days", () => {
     const input = createFixture({
-      employees: [{ id: "emp1", name: "Rahul", podId: null, preferredOffDay: null }],
+      employees: [
+        { id: "emp1", name: "Rahul", podId: null, preferredOffDay: null },
+      ],
       brandProcesses: [
         {
           id: "bp1",
@@ -131,21 +144,30 @@ describe("Roster Engine", () => {
     const { entries, issues } = generateRoster(input);
 
     for (const date of ["2026-12-08", "2026-12-09"]) {
-      const entry = entries.find((e) => e.employeeId === "emp1" && e.date === date);
+      const entry = entries.find(
+        (e) => e.employeeId === "emp1" && e.date === date,
+      );
       expect(entry?.status).toBe("LEAVE");
 
       const gap = issues.find(
-        (i) => i.type === "COVERAGE_GAP" && i.date === date && i.brandProcessId === "bp1"
+        (i) =>
+          i.type === "COVERAGE_GAP" &&
+          i.date === date &&
+          i.brandProcessId === "bp1",
       );
       expect(gap).toBeDefined();
-      expect(gap?.details?.reasons).toEqual([{ employeeId: "emp1", status: "LEAVE" }]);
+      expect(gap?.details?.reasons).toEqual([
+        { employeeId: "emp1", status: "LEAVE" },
+      ]);
     }
   });
 
   // 4. NO_SUN_HOLIDAYS brand: no gap on Sundays, employee's Sundays are WEEKOFF, no WEEKLY_OFF_MISSING.
   it("4. NO_SUN_HOLIDAYS brand: no gap on Sundays, employee's Sundays are WEEKOFF, no WEEKLY_OFF_MISSING", () => {
     const input = createFixture({
-      employees: [{ id: "emp1", name: "Rahul", podId: null, preferredOffDay: null }],
+      employees: [
+        { id: "emp1", name: "Rahul", podId: null, preferredOffDay: null },
+      ],
       brandProcesses: [
         {
           id: "bp1",
@@ -164,14 +186,20 @@ describe("Roster Engine", () => {
     expect(sundays.length).toBeGreaterThan(0);
 
     for (const sunday of sundays) {
-      const entry = entries.find((e) => e.employeeId === "emp1" && e.date === sunday);
+      const entry = entries.find(
+        (e) => e.employeeId === "emp1" && e.date === sunday,
+      );
       expect(entry?.status).toBe("WEEKOFF");
 
-      const sundayGap = issues.find((i) => i.type === "COVERAGE_GAP" && i.date === sunday);
+      const sundayGap = issues.find(
+        (i) => i.type === "COVERAGE_GAP" && i.date === sunday,
+      );
       expect(sundayGap).toBeUndefined();
     }
 
-    const missingWeeklyOff = issues.find((i) => i.type === "WEEKLY_OFF_MISSING");
+    const missingWeeklyOff = issues.find(
+      (i) => i.type === "WEEKLY_OFF_MISSING",
+    );
     expect(missingWeeklyOff).toBeUndefined();
   });
 
@@ -208,15 +236,22 @@ describe("Roster Engine", () => {
 
     const { entries, issues } = generateRoster(input);
 
-    const emp1Holiday = entries.find((e) => e.employeeId === "emp1" && e.date === holidayDate);
+    const emp1Holiday = entries.find(
+      (e) => e.employeeId === "emp1" && e.date === holidayDate,
+    );
     expect(emp1Holiday?.status).toBe("HOLIDAY");
 
     const bp1HolidayGap = issues.find(
-      (i) => i.type === "COVERAGE_GAP" && i.brandProcessId === "bp1" && i.date === holidayDate
+      (i) =>
+        i.type === "COVERAGE_GAP" &&
+        i.brandProcessId === "bp1" &&
+        i.date === holidayDate,
     );
     expect(bp1HolidayGap).toBeUndefined();
 
-    const emp2Holiday = entries.find((e) => e.employeeId === "emp2" && e.date === holidayDate);
+    const emp2Holiday = entries.find(
+      (e) => e.employeeId === "emp2" && e.date === holidayDate,
+    );
     expect(emp2Holiday?.status).toBe("WORKING");
   });
 
@@ -249,7 +284,10 @@ describe("Roster Engine", () => {
 
     for (const off of offEntries) {
       const gap = issues.find(
-        (i) => i.type === "COVERAGE_GAP" && i.brandProcessId === "bp1" && i.date === off.date
+        (i) =>
+          i.type === "COVERAGE_GAP" &&
+          i.brandProcessId === "bp1" &&
+          i.date === off.date,
       );
       expect(gap).toBeDefined();
       expect(gap?.details?.actual).toBe(1);
@@ -283,19 +321,21 @@ describe("Roster Engine", () => {
 
     const resFeasible = generateRoster(inputFeasible);
     const emp1PrefIssue = resFeasible.issues.find(
-      (i) => i.type === "PREFERENCE_NOT_MET" && i.employeeId === "emp1"
+      (i) => i.type === "PREFERENCE_NOT_MET" && i.employeeId === "emp1",
     );
     expect(emp1PrefIssue).toBeUndefined();
 
     // Check segment 1 (Dec 01 - Dec 06): Dec 02 is Wednesday
     const emp1Wed = resFeasible.entries.find(
-      (e) => e.employeeId === "emp1" && e.date === "2026-12-02"
+      (e) => e.employeeId === "emp1" && e.date === "2026-12-02",
     );
     expect(emp1Wed?.status).toBe("WEEKOFF");
 
     // 7b. Infeasible preference: single employee ALL_365, prefers Friday (5)
     const inputInfeasible = createFixture({
-      employees: [{ id: "emp1", name: "Alice", podId: null, preferredOffDay: 5 }],
+      employees: [
+        { id: "emp1", name: "Alice", podId: null, preferredOffDay: 5 },
+      ],
       brandProcesses: [
         {
           id: "bp1",
@@ -310,7 +350,7 @@ describe("Roster Engine", () => {
 
     const resInfeasible = generateRoster(inputInfeasible);
     const prefNotMet = resInfeasible.issues.find(
-      (i) => i.type === "PREFERENCE_NOT_MET" && i.employeeId === "emp1"
+      (i) => i.type === "PREFERENCE_NOT_MET" && i.employeeId === "emp1",
     );
     expect(prefNotMet).toBeDefined();
     expect(prefNotMet?.severity).toBe("INFO");
@@ -370,12 +410,16 @@ describe("Roster Engine", () => {
     const { entries } = generateRoster(input);
 
     // Find a date where emp1 is WEEKOFF, meaning emp2 is the sole working employee
-    const emp1OffEntry = entries.find((e) => e.employeeId === "emp1" && e.status === "WEEKOFF");
+    const emp1OffEntry = entries.find(
+      (e) => e.employeeId === "emp1" && e.status === "WEEKOFF",
+    );
     expect(emp1OffEntry).toBeDefined();
     const targetDate = emp1OffEntry!.date;
 
     // Verify emp2 was WORKING on targetDate
-    const emp2Entry = entries.find((e) => e.employeeId === "emp2" && e.date === targetDate);
+    const emp2Entry = entries.find(
+      (e) => e.employeeId === "emp2" && e.date === targetDate,
+    );
     expect(emp2Entry?.status).toBe("WORKING");
 
     // Add leave for emp2 without regenerating entries
@@ -394,12 +438,18 @@ describe("Roster Engine", () => {
     const validatedIssues = validateRoster(modifiedInput, entries);
 
     const conflict = validatedIssues.find(
-      (i) => i.type === "ENTRY_CONFLICTS_LEAVE" && i.employeeId === "emp2" && i.date === targetDate
+      (i) =>
+        i.type === "ENTRY_CONFLICTS_LEAVE" &&
+        i.employeeId === "emp2" &&
+        i.date === targetDate,
     );
     expect(conflict).toBeDefined();
 
     const gap = validatedIssues.find(
-      (i) => i.type === "COVERAGE_GAP" && i.brandProcessId === "bp1" && i.date === targetDate
+      (i) =>
+        i.type === "COVERAGE_GAP" &&
+        i.brandProcessId === "bp1" &&
+        i.date === targetDate,
     );
     expect(gap).toBeDefined();
   });
@@ -429,29 +479,45 @@ describe("Roster Engine", () => {
 
     const { entries } = generateRoster(input);
 
-    const emp1Off = entries.find((e) => e.employeeId === "emp1" && e.status === "WEEKOFF")!;
+    const emp1Off = entries.find(
+      (e) => e.employeeId === "emp1" && e.status === "WEEKOFF",
+    )!;
     const targetDate = emp1Off.date;
 
     // Initial validation has no gap
     const initialIssues = validateRoster(input, entries);
-    expect(initialIssues.filter((i) => i.type === "COVERAGE_GAP" && i.date === targetDate)).toHaveLength(0);
+    expect(
+      initialIssues.filter(
+        (i) => i.type === "COVERAGE_GAP" && i.date === targetDate,
+      ),
+    ).toHaveLength(0);
 
     // Flip emp2 to WEEKOFF
     const modifiedEntries: RosterEntry[] = entries.map((e) =>
-      e.employeeId === "emp2" && e.date === targetDate ? { ...e, status: "WEEKOFF", source: "MANUAL" } : e
+      e.employeeId === "emp2" && e.date === targetDate
+        ? { ...e, status: "WEEKOFF", source: "MANUAL" }
+        : e,
     );
 
     const gapIssues = validateRoster(input, modifiedEntries);
-    const gap = gapIssues.find((i) => i.type === "COVERAGE_GAP" && i.date === targetDate);
+    const gap = gapIssues.find(
+      (i) => i.type === "COVERAGE_GAP" && i.date === targetDate,
+    );
     expect(gap).toBeDefined();
 
     // Flip emp2 back to WORKING
     const revertedEntries: RosterEntry[] = entries.map((e) =>
-      e.employeeId === "emp2" && e.date === targetDate ? { ...e, status: "WORKING", source: "MANUAL" } : e
+      e.employeeId === "emp2" && e.date === targetDate
+        ? { ...e, status: "WORKING", source: "MANUAL" }
+        : e,
     );
 
     const revertedIssues = validateRoster(input, revertedEntries);
-    expect(revertedIssues.filter((i) => i.type === "COVERAGE_GAP" && i.date === targetDate)).toHaveLength(0);
+    expect(
+      revertedIssues.filter(
+        (i) => i.type === "COVERAGE_GAP" && i.date === targetDate,
+      ),
+    ).toHaveLength(0);
   });
 
   // 11. suggestBackups: for a gap, a same-processCode, same-pod WORKING employee ranks first;
@@ -466,9 +532,27 @@ describe("Roster Engine", () => {
         { id: "emp4", name: "Diana", podId: "pod-2", preferredOffDay: null }, // different process, WEEKOFF
       ],
       brandProcesses: [
-        { id: "bp1", brandName: "Nike", processCode: "CS", operatingRule: "ALL_365", minCoverage: 1 },
-        { id: "bp2", brandName: "Puma", processCode: "CS", operatingRule: "ALL_365", minCoverage: 1 },
-        { id: "bp3", brandName: "Vans", processCode: "ACC", operatingRule: "ALL_365", minCoverage: 1 },
+        {
+          id: "bp1",
+          brandName: "Nike",
+          processCode: "CS",
+          operatingRule: "ALL_365",
+          minCoverage: 1,
+        },
+        {
+          id: "bp2",
+          brandName: "Puma",
+          processCode: "CS",
+          operatingRule: "ALL_365",
+          minCoverage: 1,
+        },
+        {
+          id: "bp3",
+          brandName: "Vans",
+          processCode: "ACC",
+          operatingRule: "ALL_365",
+          minCoverage: 1,
+        },
       ],
       assignments: [
         { employeeId: "emp1", brandProcessId: "bp1" },
@@ -476,7 +560,12 @@ describe("Roster Engine", () => {
         { employeeId: "emp4", brandProcessId: "bp3" },
       ],
       leaves: [
-        { employeeId: "emp3", startDate: gapDate, endDate: gapDate, type: "LEAVE" },
+        {
+          employeeId: "emp3",
+          startDate: gapDate,
+          endDate: gapDate,
+          type: "LEAVE",
+        },
       ],
     });
 
@@ -519,7 +608,13 @@ describe("Roster Engine", () => {
         { id: "emp1", name: "Alice", podId: null, preferredOffDay: 3 },
       ],
       brandProcesses: [
-        { id: "bp1", brandName: "Nike", processCode: "CS", operatingRule: "ALL_365", minCoverage: 1 },
+        {
+          id: "bp1",
+          brandName: "Nike",
+          processCode: "CS",
+          operatingRule: "ALL_365",
+          minCoverage: 1,
+        },
       ],
       assignments: [
         { employeeId: "emp2", brandProcessId: "bp1" },
@@ -544,7 +639,13 @@ describe("Roster Engine", () => {
         { id: "emp2", name: "Bob", podId: null, preferredOffDay: null },
       ],
       brandProcesses: [
-        { id: "bp1", brandName: "Nike", processCode: "CS", operatingRule: "ALL_365", minCoverage: 1 },
+        {
+          id: "bp1",
+          brandName: "Nike",
+          processCode: "CS",
+          operatingRule: "ALL_365",
+          minCoverage: 1,
+        },
       ],
       assignments: [
         { employeeId: "emp1", brandProcessId: "bp1" },
@@ -561,8 +662,99 @@ describe("Roster Engine", () => {
 
     for (const emp of febInput.employees) {
       for (const d of febDates) {
-        const matching = febRun.entries.filter((e) => e.employeeId === emp.id && e.date === d);
+        const matching = febRun.entries.filter(
+          (e) => e.employeeId === emp.id && e.date === d,
+        );
         expect(matching).toHaveLength(1);
+      }
+    }
+  });
+
+  // 13. Performance guard: synthetic input (150 employees, 60 brand-processes, Dec 2026)
+  it("13. Performance guard: 150 employees, 60 brand-processes runs in under 1500 ms", () => {
+    const operatingRules: ("ALL_365" | "EXCEPT_HOLIDAYS" | "NO_SUN_HOLIDAYS")[] = [
+      "ALL_365",
+      "EXCEPT_HOLIDAYS",
+      "NO_SUN_HOLIDAYS",
+    ];
+    const processCodes = ["CS", "ACC", "NDR", "RET"];
+
+    const employees = Array.from({ length: 150 }, (_, i) => ({
+      id: `emp-${i + 1}`,
+      name: `Employee ${i + 1}`,
+      podId: `pod-${(i % 10) + 1}`,
+      preferredOffDay: i % 7,
+    }));
+
+    const brandProcesses = Array.from({ length: 60 }, (_, i) => ({
+      id: `bp-${i + 1}`,
+      brandName: `Brand ${(i % 15) + 1}`,
+      processCode: processCodes[i % processCodes.length],
+      operatingRule: operatingRules[i % operatingRules.length],
+      minCoverage: (i % 2) + 1,
+    }));
+
+    // Each employee assigned to (i % 60); guarantees every emp assigned, 2-3 per bp
+    const assignments = employees.map((emp, i) => ({
+      employeeId: emp.id,
+      brandProcessId: `bp-${(i % 60) + 1}`,
+    }));
+
+    const leaves = [
+      {
+        employeeId: "emp-1",
+        startDate: "2026-12-05",
+        endDate: "2026-12-07",
+        type: "LEAVE" as const,
+      },
+      {
+        employeeId: "emp-10",
+        startDate: "2026-12-12",
+        endDate: "2026-12-14",
+        type: "COMP_OFF" as const,
+      },
+      {
+        employeeId: "emp-50",
+        startDate: "2026-12-20",
+        endDate: "2026-12-24",
+        type: "LEAVE" as const,
+      },
+    ];
+
+    const input: EngineInput = {
+      year: 2026,
+      month: 12,
+      employees,
+      brandProcesses,
+      assignments,
+      holidays: ["2026-12-25"],
+      leaves,
+    };
+
+    const start = performance.now();
+    const { entries } = generateRoster(input);
+    const issues = validateRoster(input, entries);
+    const elapsed = performance.now() - start;
+
+    expect(elapsed).toBeLessThan(1500);
+    expect(entries).toHaveLength(150 * 31);
+    expect(issues).toBeDefined();
+
+    // Verify every employee has exactly one entry per date
+    const decDates = monthDates(2026, 12);
+    const entriesByEmp = new Map<string, Set<string>>();
+    for (const e of entries) {
+      if (!entriesByEmp.has(e.employeeId)) {
+        entriesByEmp.set(e.employeeId, new Set());
+      }
+      entriesByEmp.get(e.employeeId)!.add(e.date);
+    }
+
+    for (const emp of employees) {
+      const empDates = entriesByEmp.get(emp.id);
+      expect(empDates?.size).toBe(31);
+      for (const d of decDates) {
+        expect(empDates?.has(d)).toBe(true);
       }
     }
   });

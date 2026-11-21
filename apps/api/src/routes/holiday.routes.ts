@@ -4,13 +4,13 @@ import {
   createHoliday,
   deleteHoliday,
 } from "../controllers/holiday.controller";
-import { requireAuth, requireRole } from "../middleware/requireAuth";
+import { requireAuth, managerOnly } from "../middleware/requireAuth";
 
 const router = Router();
 
 router.use(requireAuth);
 router.get("/", getHolidays);
-router.post("/", requireRole("ADMIN", "MANAGER"), createHoliday);
-router.delete("/:id", requireRole("ADMIN", "MANAGER"), deleteHoliday);
+router.post("/", managerOnly, createHoliday);
+router.delete("/:id", managerOnly, deleteHoliday);
 
 export default router;

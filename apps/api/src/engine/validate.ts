@@ -2,16 +2,23 @@ import type { EngineInput, RosterEntry, Issue, DayStatus } from "./types";
 import { monthDates, weekSegments, weekdayOf, isInRange } from "./dates";
 import { isOperating } from "./generate";
 
-export function validateRoster(input: EngineInput, entries: RosterEntry[]): Issue[] {
+export function validateRoster(
+  input: EngineInput,
+  entries: RosterEntry[],
+): Issue[] {
   const issues: Issue[] = [];
 
   // Filter & index valid employees
-  const validEmployees = [...input.employees].sort((a, b) => a.id.localeCompare(b.id));
+  const validEmployees = [...input.employees].sort((a, b) =>
+    a.id.localeCompare(b.id),
+  );
   const validEmpIds = new Set(validEmployees.map((e) => e.id));
   const empMap = new Map(validEmployees.map((e) => [e.id, e]));
 
   // Brand processes & assignments
-  const brandProcesses = [...input.brandProcesses].sort((a, b) => a.id.localeCompare(b.id));
+  const brandProcesses = [...input.brandProcesses].sort((a, b) =>
+    a.id.localeCompare(b.id),
+  );
   const bpMap = new Map(brandProcesses.map((bp) => [bp.id, bp]));
 
   const assignedEmployeesByBp = new Map<string, typeof validEmployees>();
@@ -21,7 +28,11 @@ export function validateRoster(input: EngineInput, entries: RosterEntry[]): Issu
 
   const sortedAssignments = [...input.assignments]
     .filter((a) => validEmpIds.has(a.employeeId) && bpMap.has(a.brandProcessId))
-    .sort((a, b) => a.employeeId.localeCompare(b.employeeId) || a.brandProcessId.localeCompare(b.brandProcessId));
+    .sort(
+      (a, b) =>
+        a.employeeId.localeCompare(b.employeeId) ||
+        a.brandProcessId.localeCompare(b.brandProcessId),
+    );
 
   for (const a of sortedAssignments) {
     const emp = empMap.get(a.employeeId);
@@ -35,7 +46,11 @@ export function validateRoster(input: EngineInput, entries: RosterEntry[]): Issu
 
   const leaves = [...input.leaves]
     .filter((l) => validEmpIds.has(l.employeeId))
-    .sort((a, b) => a.employeeId.localeCompare(b.employeeId) || a.startDate.localeCompare(b.startDate));
+    .sort(
+      (a, b) =>
+        a.employeeId.localeCompare(b.employeeId) ||
+        a.startDate.localeCompare(b.startDate),
+    );
 
   const dates = monthDates(input.year, input.month);
   const segments = weekSegments(dates);
@@ -51,7 +66,9 @@ export function validateRoster(input: EngineInput, entries: RosterEntry[]): Issu
   // Helper: compute effective status per employee and date
   // if a leave in input covers the date -> LEAVE/COMP_OFF regardless of the entry; else entry status (missing = WORKING).
   const getEffectiveStatus = (empId: string, date: string): DayStatus => {
-    const leave = leaves.find((l) => l.employeeId === empId && isInRange(date, l.startDate, l.endDate));
+    const leave = leaves.find(
+      (l) => l.employeeId === empId && isInRange(date, l.startDate, l.endDate),
+    );
     if (leave) {
       return leave.type;
     }
@@ -63,7 +80,11 @@ export function validateRoster(input: EngineInput, entries: RosterEntry[]): Issu
   for (const entry of entries) {
     if (!validEmpIds.has(entry.employeeId)) continue;
     if (entry.status === "WORKING") {
-      const leave = leaves.find((l) => l.employeeId === entry.employeeId && isInRange(entry.date, l.startDate, l.endDate));
+      const leave = leaves.find(
+        (l) =>
+          l.employeeId === entry.employeeId &&
+          isInRange(entry.date, l.startDate, l.endDate),
+      );
       if (leave) {
         const emp = empMap.get(entry.employeeId);
         issues.push({
@@ -126,7 +147,12 @@ export function validateRoster(input: EngineInput, entries: RosterEntry[]): Issu
       const workingCount = reasons.filter((r) => r.status === "WORKING").length;
 
       if (workingCount < bp.minCoverage) {
-        const reasonsStr = reasons.map((r) => `${empMap.get(r.employeeId)?.name || r.employeeId}: ${r.status}`).join(", ");
+        const reasonsStr = reasons
+          .map(
+            (r) =>
+              `${empMap.get(r.employeeId)?.name || r.employeeId}: ${r.status}`,
+          )
+          .join(", ");
         issues.push({
           type: "COVERAGE_GAP",
           severity: "ERROR",
@@ -150,7 +176,9 @@ export function validateRoster(input: EngineInput, entries: RosterEntry[]): Issu
   for (const emp of validEmployees) {
     for (const segment of segments) {
       if (segment.length >= 4) {
-        const hasNonWorking = segment.some((date) => getEffectiveStatus(emp.id, date) !== "WORKING");
+        const hasNonWorking = segment.some(
+          (date) => getEffectiveStatus(emp.id, date) !== "WORKING",
+        );
         if (!hasNonWorking) {
           issues.push({
             type: "WEEKLY_OFF_MISSING",
@@ -172,9 +200,13 @@ export function validateRoster(input: EngineInput, entries: RosterEntry[]): Issu
     if (emp.preferredOffDay !== null) {
       let unmetWeeks = 0;
       for (const segment of segments) {
-        const offDates = segment.filter((date) => getEffectiveStatus(emp.id, date) !== "WORKING");
+        const offDates = segment.filter(
+          (date) => getEffectiveStatus(emp.id, date) !== "WORKING",
+        );
         if (offDates.length > 0) {
-          const hasPreferredOffDay = offDates.some((date) => weekdayOf(date) === emp.preferredOffDay);
+          const hasPreferredOffDay = offDates.some(
+            (date) => weekdayOf(date) === emp.preferredOffDay,
+          );
           if (!hasPreferredOffDay) {
             unmetWeeks++;
           }

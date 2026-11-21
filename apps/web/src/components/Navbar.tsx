@@ -21,37 +21,17 @@ export function RosterMark({ className = "w-4 h-4 text-[#1F4D3A]" }: { className
 interface NavItem {
   label: string;
   to: string;
-  ready: boolean;
 }
 
-const navByRole: Record<string, NavItem[]> = {
-  ADMIN: [
-    { label: "Dashboard", to: "/dashboard", ready: true },
-    { label: "Employees", to: "/employees", ready: true },
-    { label: "Brands", to: "/brands", ready: true },
-    { label: "Pods", to: "/pods", ready: true },
-    { label: "Roster", to: "/roster", ready: false },
-    { label: "Conflicts", to: "/conflicts", ready: false },
-    { label: "Users", to: "/users", ready: false },
-  ],
-  MANAGER: [
-    { label: "Dashboard", to: "/dashboard", ready: true },
-    { label: "Employees", to: "/employees", ready: true },
-    { label: "Brands", to: "/brands", ready: true },
-    { label: "Pods", to: "/pods", ready: true },
-    { label: "Roster", to: "/roster", ready: false },
-    { label: "Conflicts", to: "/conflicts", ready: false },
-  ],
-  POD_LEAD: [
-    { label: "Dashboard", to: "/dashboard", ready: true },
-    { label: "My Pod", to: "/my-pod", ready: false },
-    { label: "Roster", to: "/roster", ready: false },
-  ],
-  EMPLOYEE: [
-    { label: "Dashboard", to: "/dashboard", ready: true },
-    { label: "My Schedule", to: "/schedule", ready: false },
-  ],
-};
+const navItems: NavItem[] = [
+  { label: "Dashboard", to: "/dashboard" },
+  { label: "Employees", to: "/employees" },
+  { label: "Brands", to: "/brands" },
+  { label: "Pods", to: "/pods" },
+  { label: "Roster", to: "/roster" },
+  { label: "Leaves", to: "/leaves" },
+  { label: "Holidays", to: "/holidays" },
+];
 
 function getInitials(name?: string): string {
   if (!name) return "SR";
@@ -66,10 +46,6 @@ export default function Navbar() {
   const navigate = useNavigate();
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
-
-  const role = user?.role || "EMPLOYEE";
-  const items = navByRole[role] || navByRole.EMPLOYEE;
-  const activeItems = items.filter((item) => item.ready);
 
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
@@ -119,16 +95,17 @@ export default function Navbar() {
 
         {/* Desktop Nav Links */}
         <nav className="hidden md:flex items-center gap-6">
-          {activeItems.map((item) => {
+          {navItems.map((item) => {
             const active = isLinkActive(item.to);
             return (
               <Link
                 key={item.label}
                 to={item.to}
-                className={`py-1 text-sm font-medium transition-colors ${active
+                className={`py-1 text-sm font-medium transition-colors ${
+                  active
                     ? "border-b-2 border-[#1F4D3A] text-[#1F4D3A]"
                     : "text-[#6B675F] hover:text-[#1D1C1A]"
-                  }`}
+                }`}
               >
                 {item.label}
               </Link>
@@ -174,16 +151,17 @@ export default function Navbar() {
 
       {/* Mobile Nav Links: scroll horizontally under bar */}
       <nav className="flex md:hidden overflow-x-auto border-t border-[#E2DDD3] px-4 py-2 gap-4">
-        {activeItems.map((item) => {
+        {navItems.map((item) => {
           const active = isLinkActive(item.to);
           return (
             <Link
               key={item.label}
               to={item.to}
-              className={`whitespace-nowrap py-1 text-sm font-medium ${active
+              className={`whitespace-nowrap py-1 text-sm font-medium ${
+                active
                   ? "border-b-2 border-[#1F4D3A] text-[#1F4D3A]"
                   : "text-[#6B675F] hover:text-[#1D1C1A]"
-                }`}
+              }`}
             >
               {item.label}
             </Link>

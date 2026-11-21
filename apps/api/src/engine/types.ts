@@ -1,4 +1,9 @@
-export type DayStatus = "WORKING" | "WEEKOFF" | "LEAVE" | "COMP_OFF" | "HOLIDAY";
+export type DayStatus =
+  | "WORKING"
+  | "WEEKOFF"
+  | "LEAVE"
+  | "COMP_OFF"
+  | "HOLIDAY";
 
 export type OperatingRule = "ALL_365" | "EXCEPT_HOLIDAYS" | "NO_SUN_HOLIDAYS";
 

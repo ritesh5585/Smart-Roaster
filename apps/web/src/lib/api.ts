@@ -25,6 +25,7 @@ export interface Employee {
   isActive: boolean;
   podId?: string | null;
   pod?: Pod | null;
+  preferredOffDay?: number | null;
   _count?: { assignments: number };
 }
 
@@ -56,6 +57,30 @@ export interface Brand {
   name: string;
   isActive: boolean;
   brandProcesses: BrandProcess[];
+}
+
+export interface Holiday {
+  id: string;
+  date: string;
+  name: string;
+}
+
+export type LeaveType = "LEAVE" | "COMP_OFF";
+
+export interface Leave {
+  id: string;
+  employeeId: string;
+  employeeName?: string;
+  employee?: {
+    id: string;
+    name: string;
+    email?: string | null;
+  };
+  startDate: string;
+  endDate: string;
+  type: LeaveType;
+  note?: string | null;
+  createdAt?: string;
 }
 
 interface ApiResult<T> {
@@ -135,6 +160,7 @@ export const api = {
       email?: string | null;
       podId?: string | null;
       isActive?: boolean;
+      preferredOffDay?: number | null;
     },
   ) =>
     request<Employee>(`/employees/${id}`, {
@@ -187,4 +213,32 @@ export const api = {
     }),
   deleteAssignment: (id: string) =>
     request<{ message: string }>(`/assignments/${id}`, { method: "DELETE" }),
+
+  // Holidays
+  getHolidays: (params?: { year?: number | string }) =>
+    request<Holiday[]>(`/holidays${params?.year ? `?year=${params.year}` : ""}`),
+  createHoliday: (body: { date: string; name: string }) =>
+    request<Holiday>("/holidays", { method: "POST", body: JSON.stringify(body) }),
+  deleteHoliday: (id: string) =>
+    request<{ message: string }>(`/holidays/${id}`, { method: "DELETE" }),
+
+  // Leaves
+  getLeaves: (params?: { employeeId?: string; from?: string; to?: string }) => {
+    const query = new URLSearchParams();
+    if (params?.employeeId) query.set("employeeId", params.employeeId);
+    if (params?.from) query.set("from", params.from);
+    if (params?.to) query.set("to", params.to);
+    const qStr = query.toString();
+    return request<Leave[]>(`/leaves${qStr ? `?${qStr}` : ""}`);
+  },
+  createLeave: (body: {
+    employeeId: string;
+    startDate: string;
+    endDate: string;
+    type?: LeaveType;
+    note?: string | null;
+  }) =>
+    request<Leave>("/leaves", { method: "POST", body: JSON.stringify(body) }),
+  deleteLeave: (id: string) =>
+    request<{ message: string }>(`/leaves/${id}`, { method: "DELETE" }),
 };

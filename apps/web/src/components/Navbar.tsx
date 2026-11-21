@@ -30,6 +30,8 @@ const navByRole: Record<string, NavItem[]> = {
     { label: "Employees", to: "/employees", ready: true },
     { label: "Brands", to: "/brands", ready: true },
     { label: "Pods", to: "/pods", ready: true },
+    { label: "Leaves", to: "/leaves", ready: true },
+    { label: "Holidays", to: "/holidays", ready: true },
     { label: "Roster", to: "/roster", ready: false },
     { label: "Conflicts", to: "/conflicts", ready: false },
     { label: "Users", to: "/users", ready: false },
@@ -39,11 +41,15 @@ const navByRole: Record<string, NavItem[]> = {
     { label: "Employees", to: "/employees", ready: true },
     { label: "Brands", to: "/brands", ready: true },
     { label: "Pods", to: "/pods", ready: true },
+    { label: "Leaves", to: "/leaves", ready: true },
+    { label: "Holidays", to: "/holidays", ready: true },
     { label: "Roster", to: "/roster", ready: false },
     { label: "Conflicts", to: "/conflicts", ready: false },
   ],
   POD_LEAD: [
     { label: "Dashboard", to: "/dashboard", ready: true },
+    { label: "Leaves", to: "/leaves", ready: true },
+    { label: "Holidays", to: "/holidays", ready: true },
     { label: "My Pod", to: "/my-pod", ready: false },
     { label: "Roster", to: "/roster", ready: false },
   ],
@@ -125,10 +131,11 @@ export default function Navbar() {
               <Link
                 key={item.label}
                 to={item.to}
-                className={`py-1 text-sm font-medium transition-colors ${active
+                className={`py-1 text-sm font-medium transition-colors ${
+                  active
                     ? "border-b-2 border-[#1F4D3A] text-[#1F4D3A]"
                     : "text-[#6B675F] hover:text-[#1D1C1A]"
-                  }`}
+                }`}
               >
                 {item.label}
               </Link>
@@ -180,10 +187,11 @@ export default function Navbar() {
             <Link
               key={item.label}
               to={item.to}
-              className={`whitespace-nowrap py-1 text-sm font-medium ${active
+              className={`whitespace-nowrap py-1 text-sm font-medium ${
+                active
                   ? "border-b-2 border-[#1F4D3A] text-[#1F4D3A]"
                   : "text-[#6B675F] hover:text-[#1D1C1A]"
-                }`}
+              }`}
             >
               {item.label}
             </Link>

@@ -26,3 +26,105 @@ model User {
 
   @@map("users")
 }
+
+enum OperatingRule {
+  ALL_365
+  EXCEPT_HOLIDAYS
+  NO_SUN_HOLIDAYS
+}
+
+model Pod {
+  id      String     @id @default(uuid())
+  name    String     @unique
+  leadId  String?    @unique
+  lead    Employee?  @relation("PodLead", fields: [leadId], references: [id])
+  members Employee[] @relation("PodMembers")
+
+  @@map("pods")
+}
+
+model Employee {
+  id              String       @id @default(uuid())
+  name            String
+  email           String?      @unique
+  isActive        Boolean      @default(true)
+  podId           String?
+  pod             Pod?         @relation("PodMembers", fields: [podId], references: [id])
+  ledPod          Pod?         @relation("PodLead")
+  assignments     Assignment[]
+  preferredOffDay Int?
+  leaves          Leave[]
+  createdAt       DateTime     @default(now())
+
+  @@map("employees")
+}
+
+model Process {
+  id             String         @id @default(uuid())
+  code           String         @unique // CS, ACC, NDR, RET
+  name           String
+  brandProcesses BrandProcess[]
+
+  @@map("processes")
+}
+
+model Brand {
+  id             String         @id @default(uuid())
+  name           String         @unique
+  isActive       Boolean        @default(true)
+  brandProcesses BrandProcess[]
+
+  @@map("brands")
+}
+
+model BrandProcess {
+  id            String        @id @default(uuid())
+  brandId       String
+  processId     String
+  operatingRule OperatingRule @default(EXCEPT_HOLIDAYS)
+  minCoverage   Int           @default(1)
+  brand         Brand         @relation(fields: [brandId], references: [id], onDelete: Cascade)
+  process       Process       @relation(fields: [processId], references: [id])
+  assignments   Assignment[]
+
+  @@unique([brandId, processId])
+  @@map("brand_processes")
+}
+
+model Assignment {
+  id             String       @id @default(uuid())
+  employeeId     String
+  brandProcessId String
+  employee       Employee     @relation(fields: [employeeId], references: [id])
+  brandProcess   BrandProcess @relation(fields: [brandProcessId], references: [id], onDelete: Cascade)
+
+  @@unique([employeeId, brandProcessId])
+  @@map("assignments")
+}
+
+enum LeaveType {
+  LEAVE
+  COMP_OFF
+}
+
+model Holiday {
+  id   String   @id @default(uuid())
+  date DateTime @unique @db.Date
+  name String
+
+  @@map("holidays")
+}
+
+model Leave {
+  id         String    @id @default(uuid())
+  employeeId String
+  employee   Employee  @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+  startDate  DateTime  @db.Date
+  endDate    DateTime  @db.Date
+  type       LeaveType @default(LEAVE)
+  note       String?
+  createdAt  DateTime  @default(now())
+
+  @@index([employeeId, startDate, endDate])
+  @@map("leaves")
+}

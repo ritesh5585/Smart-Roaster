@@ -1,18 +1,70 @@
+import { useState, useEffect } from "react";
 import { useAuth } from "../context/AuthContext";
 import Navbar from "../components/Navbar";
+import { api, type Leave } from "../lib/api";
+import { getTodayDateString, getFutureDateString, formatDateRange } from "../lib/dateUtils";
 
 export default function Dashboard() {
   const { user } = useAuth();
+  const [activeEmpCount, setActiveEmpCount] = useState<number | null>(null);
+  const [activeBrandsCount, setActiveBrandsCount] = useState<number | null>(null);
+  const [podsCount, setPodsCount] = useState<number | null>(null);
+  const [upcomingLeaves, setUpcomingLeaves] = useState<Leave[]>([]);
+  const [leavesLoading, setLeavesLoading] = useState(true);
+
+  useEffect(() => {
+    let mounted = true;
+
+    Promise.all([
+      api.getEmployees({ active: true }),
+      api.getBrands(),
+      api.getPods(),
+      api.getLeaves({
+        from: getTodayDateString(),
+        to: getFutureDateString(14),
+      }),
+    ]).then(([empRes, brandRes, podRes, leavesRes]) => {
+      if (!mounted) return;
+      if (empRes.data) setActiveEmpCount(empRes.data.length);
+      if (brandRes.data) {
+        const activeBrands = brandRes.data.filter((b) => b.isActive);
+        setActiveBrandsCount(activeBrands.length);
+      }
+      if (podRes.data) setPodsCount(podRes.data.length);
+      if (leavesRes.data) setUpcomingLeaves(leavesRes.data);
+      setLeavesLoading(false);
+    });
+
+    return () => {
+      mounted = false;
+    };
+  }, []);
 
   const hour = new Date().getHours();
   const greeting = hour < 12 ? "Good morning" : hour < 18 ? "Good afternoon" : "Good evening";
   const firstName = user?.name ? user.name.trim().split(/\s+/)[0] : "there";
 
   const statTiles = [
-    { label: "Employees", value: "--", note: "Available after setup" },
-    { label: "Active brands", value: "--", note: "Available after setup" },
-    { label: "Pods", value: "--", note: "Available after setup" },
-    { label: "Open conflicts", value: "--", note: "Available after setup" },
+    {
+      label: "Employees",
+      value: activeEmpCount !== null ? String(activeEmpCount) : "--",
+      note: activeEmpCount !== null ? "Active staff" : "Available after setup",
+    },
+    {
+      label: "Active brands",
+      value: activeBrandsCount !== null ? String(activeBrandsCount) : "--",
+      note: activeBrandsCount !== null ? "Operating brands" : "Available after setup",
+    },
+    {
+      label: "Pods",
+      value: podsCount !== null ? String(podsCount) : "--",
+      note: podsCount !== null ? "Operational pods" : "Available after setup",
+    },
+    {
+      label: "Open conflicts",
+      value: "--",
+      note: "Available after setup",
+    },
   ];
 
   const weekdays = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
@@ -112,6 +164,46 @@ export default function Dashboard() {
               Configuration unlocks sequentially once organization data is saved.
             </div>
           </div>
+        </div>
+
+        {/* Upcoming Leaves Panel */}
+        <div className="mt-6 rounded-[6px] border border-[#E2DDD3] bg-[#FFFFFF] p-6">
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="font-['Newsreader',Georgia,serif] text-xl font-medium text-[#1D1C1A]">
+              Upcoming leaves (next 14 days)
+            </h2>
+            <span className="text-xs text-[#6B675F]">Next 14 days</span>
+          </div>
+
+          {leavesLoading ? (
+            <p className="text-sm text-[#6B675F] py-4">Loading leaves…</p>
+          ) : upcomingLeaves.length === 0 ? (
+            <p className="text-sm text-[#6B675F] py-4">No upcoming leaves.</p>
+          ) : (
+            <ul className="divide-y divide-[#E2DDD3]">
+              {upcomingLeaves.map((l) => (
+                <li key={l.id} className="py-3 flex items-center justify-between first:pt-0 last:pb-0">
+                  <div className="flex items-center gap-3">
+                    <span className="text-sm font-medium text-[#1D1C1A]">
+                      {l.employeeName || l.employee?.name || "Staff Member"}
+                    </span>
+                    <span
+                      className={`inline-block rounded-[6px] px-2 py-0.5 text-xs font-medium ${
+                        l.type === "COMP_OFF"
+                          ? "border border-[#B45309]/30 bg-[#B45309]/10 text-[#B45309]"
+                          : "bg-[#E4ECE6] text-[#1F4D3A]"
+                      }`}
+                    >
+                      {l.type === "COMP_OFF" ? "COMP_OFF" : "LEAVE"}
+                    </span>
+                  </div>
+                  <span className="text-xs text-[#6B675F]">
+                    {formatDateRange(l.startDate, l.endDate)}
+                  </span>
+                </li>
+              ))}
+            </ul>
+          )}
         </div>
       </main>
     </div>

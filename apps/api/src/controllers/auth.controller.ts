@@ -5,7 +5,8 @@ import { z } from "zod";
 import { User } from "@prisma/client";
 import { prisma } from "../lib/prisma";
 
-const isProd = process.env.NODE_ENV === "production";
+const isProd =
+  process.env.NODE_ENV === "production" || Boolean(process.env.VERCEL);
 
 const cookieOptions = {
   httpOnly: true,

@@ -49,69 +49,73 @@ export interface RosterView {
   };
 }
 
-export async function loadEngineInput(year: number, month: number): Promise<EngineInput> {
+export async function loadEngineInput(
+  year: number,
+  month: number,
+): Promise<EngineInput> {
   const dates = monthDates(year, month);
   const firstDate = parseDate(dates[0]);
   const lastDate = parseDate(dates[dates.length - 1]);
 
-  const [employees, brandProcesses, assignments, holidays, leaves] = await Promise.all([
-    prisma.employee.findMany({
-      where: { isActive: true },
-      select: {
-        id: true,
-        name: true,
-        podId: true,
-        preferredOffDay: true,
-      },
-      orderBy: { id: "asc" },
-    }),
-    prisma.brandProcess.findMany({
-      where: { brand: { isActive: true } },
-      select: {
-        id: true,
-        operatingRule: true,
-        minCoverage: true,
-        brand: { select: { name: true } },
-        process: { select: { code: true } },
-      },
-      orderBy: { id: "asc" },
-    }),
-    prisma.assignment.findMany({
-      where: {
-        employee: { isActive: true },
-        brandProcess: { brand: { isActive: true } },
-      },
-      select: {
-        employeeId: true,
-        brandProcessId: true,
-      },
-      orderBy: [{ employeeId: "asc" }, { brandProcessId: "asc" }],
-    }),
-    prisma.holiday.findMany({
-      where: {
-        date: {
-          gte: firstDate,
-          lte: lastDate,
+  const [employees, brandProcesses, assignments, holidays, leaves] =
+    await Promise.all([
+      prisma.employee.findMany({
+        where: { isActive: true },
+        select: {
+          id: true,
+          name: true,
+          podId: true,
+          preferredOffDay: true,
         },
-      },
-      select: { date: true },
-      orderBy: { date: "asc" },
-    }),
-    prisma.leave.findMany({
-      where: {
-        employee: { isActive: true },
-        startDate: { lte: lastDate },
-        endDate: { gte: firstDate },
-      },
-      select: {
-        employeeId: true,
-        startDate: true,
-        endDate: true,
-        type: true,
-      },
-      orderBy: [{ employeeId: "asc" }, { startDate: "asc" }],
-    }),
-  ]);
+        orderBy: { id: "asc" },
+      }),
+      prisma.brandProcess.findMany({
+        where: { brand: { isActive: true } },
+        select: {
+          id: true,
+          operatingRule: true,
+          minCoverage: true,
+          brand: { select: { name: true } },
+          process: { select: { code: true } },
+        },
+        orderBy: { id: "asc" },
+      }),
+      prisma.assignment.findMany({
+        where: {
+          employee: { isActive: true },
+          brandProcess: { brand: { isActive: true } },
+        },
+        select: {
+          employeeId: true,
+          brandProcessId: true,
+        },
+        orderBy: [{ employeeId: "asc" }, { brandProcessId: "asc" }],
+      }),
+      prisma.holiday.findMany({
+        where: {
+          date: {
+            gte: firstDate,
+            lte: lastDate,
+          },
+        },
+        select: { date: true },
+        orderBy: { date: "asc" },
+      }),
+      prisma.leave.findMany({
+        where: {
+          employee: { isActive: true },
+          startDate: { lte: lastDate },
+          endDate: { gte: firstDate },
+        },
+        select: {
+          employeeId: true,
+          startDate: true,
+          endDate: true,
+          type: true,
+        },
+        orderBy: [{ employeeId: "asc" }, { startDate: "asc" }],
+      }),
+    ]);
 
   return {
     year,
@@ -143,7 +147,9 @@ export async function loadEngineInput(year: number, month: number): Promise<Engi
   };
 }
 
-export async function loadRosterEntries(rosterId: string): Promise<EngineRosterEntry[]> {
+export async function loadRosterEntries(
+  rosterId: string,
+): Promise<EngineRosterEntry[]> {
   const dbEntries = await prisma.rosterEntry.findMany({
     where: { rosterId },
     select: {
@@ -163,7 +169,9 @@ export async function loadRosterEntries(rosterId: string): Promise<EngineRosterE
   }));
 }
 
-export async function getRosterView(rosterId: string): Promise<RosterView | null> {
+export async function getRosterView(
+  rosterId: string,
+): Promise<RosterView | null> {
   const roster = await prisma.roster.findUnique({
     where: { id: rosterId },
     select: {
@@ -192,7 +200,9 @@ export async function getRosterView(rosterId: string): Promise<RosterView | null
   const dates = monthDates(roster.year, roster.month);
   const holidaySet = new Set(input.holidays);
   const assignedBpIds = new Set(input.assignments.map((a) => a.brandProcessId));
-  const activeBpsWithAssignees = input.brandProcesses.filter((bp) => assignedBpIds.has(bp.id));
+  const activeBpsWithAssignees = input.brandProcesses.filter((bp) =>
+    assignedBpIds.has(bp.id),
+  );
 
   const entryMap = new Map<string, DayStatus>();
   for (const entry of entries) {
@@ -201,7 +211,7 @@ export async function getRosterView(rosterId: string): Promise<RosterView | null
 
   const getEffectiveStatus = (empId: string, date: string): DayStatus => {
     const leave = input.leaves.find(
-      (l) => l.employeeId === empId && l.startDate <= date && l.endDate >= date
+      (l) => l.employeeId === empId && l.startDate <= date && l.endDate >= date,
     );
     if (leave) {
       return leave.type;
@@ -233,7 +243,7 @@ export async function getRosterView(rosterId: string): Promise<RosterView | null
       if (isOperating(bp.operatingRule, date, holidaySet)) {
         totalOperatingBpDays++;
         const actual = assignedEmpIds.filter(
-          (empId) => getEffectiveStatus(empId, date) === "WORKING"
+          (empId) => getEffectiveStatus(empId, date) === "WORKING",
         ).length;
 
         coverage.push({

@@ -14,11 +14,7 @@ import holidayRoutes from "./routes/holiday.routes";
 import leaveRoutes from "./routes/leave.routes";
 import rosterRoutes from "./routes/roster.routes";
 
-for (const key of [
-  "DATABASE_URL",
-  "JWT_SECRET",
-  "CLIENT_ORIGIN",
-]) {
+for (const key of ["DATABASE_URL", "JWT_SECRET", "CLIENT_ORIGIN"]) {
   if (!process.env[key]) throw new Error(`Missing env var: ${key}`);
 }
 
@@ -27,7 +23,15 @@ const app = express();
 app.set("trust proxy", 1);
 
 app.use(helmet());
-app.use(cors({ origin: process.env.CLIENT_ORIGIN, credentials: true }));
+app.use(
+  cors({
+    origin: [
+      process.env.CLIENT_ORIGIN || "http://localhost:5173",
+      "http://localhost:5173",
+    ],
+    credentials: true,
+  }),
+);
 app.use(express.json({ limit: "10kb" }));
 app.use(cookieParser());
 
@@ -44,4 +48,8 @@ app.use("/leaves", leaveRoutes);
 app.use("/rosters", rosterRoutes);
 
 const port = Number(process.env.PORT) || 4000;
-app.listen(port, () => console.log(`API running on :${port}`));
+if (!process.env.VERCEL) {
+  app.listen(port, () => console.log(`API running on :${port}`));
+}
+
+export default app;

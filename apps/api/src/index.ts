@@ -22,13 +22,23 @@ const app = express();
 
 app.set("trust proxy", 1);
 
+const clientOrigin = process.env.CLIENT_ORIGIN?.replace(/\/+$/, "");
+const localOrigin = /^http:\/\/localhost(?::\d+)?$/;
+const previewOrigin =
+  /^https:\/\/employee-roaster-[a-z0-9-]+-ritesh5585s-projects\.vercel\.app$/;
+
 app.use(helmet());
 app.use(
   cors({
-    origin: [
-      process.env.CLIENT_ORIGIN || "http://localhost:5173",
-      "http://localhost:5173",
-    ],
+    origin: (origin, callback) => {
+      const allowed =
+        !origin ||
+        origin === clientOrigin ||
+        origin === "https://employee-roaster.vercel.app" ||
+        localOrigin.test(origin) ||
+        previewOrigin.test(origin);
+      callback(null, allowed);
+    },
     credentials: true,
   }),
 );

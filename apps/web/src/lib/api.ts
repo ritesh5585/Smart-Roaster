@@ -1,4 +1,7 @@
-const API = (import.meta.env.VITE_API_URL || "/app").replace(/\/+$/, "");
+const configuredApi = import.meta.env.VITE_API_URL;
+const API = configuredApi?.startsWith("/api")
+  ? configuredApi.replace(/\/+$/, "")
+  : "/api";
 
 export interface ApiUser {
   id: string;
